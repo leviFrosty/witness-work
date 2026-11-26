@@ -26,6 +26,8 @@ import {
 } from './limits'
 import type { Environment } from '../types'
 import { RATE_LIMIT_PERIOD_SECONDS } from '../rateLimit'
+import { callerQuotaName } from '../accounts/rateCounter'
+import { bytesToBase64Url, sha256Bytes } from '../crypto'
 
 vi.mock('cloudflare:workers', () => ({
   DurableObject: class {
@@ -471,6 +473,42 @@ describe('registration quota', () => {
     expect(quotaCalls).not.toHaveBeenCalled()
     expect((await register('198.51.100.3', owner)).status).toBe(200)
     expect(quotaCalls).toHaveBeenCalledTimes(1)
+  })
+
+  it('names a caller’s quota by a keyed HMAC, never a plain hash of its IP', async () => {
+    const owner = await Owner.create(h, false)
+    const names = vi.spyOn(h.env.BUDDY_REGISTRATION_QUOTA, 'idFromName')
+    expect((await register('198.51.100.4', owner)).status).toBe(200)
+    const [[name]] = names.mock.calls
+    expect(name).toBe(
+      await callerQuotaName(h.env, 'buddies/register-caller', '198.51.100.4')
+    )
+    // The name before the HMAC, which anyone could compute for every IPv4
+    // address.
+    const plain = bytesToBase64Url(
+      await sha256Bytes(
+        new TextEncoder().encode('ww-buddies/v1/register-caller\n198.51.100.4')
+      )
+    )
+    expect(name).not.toBe(plain)
+    expect(name).not.toContain('198.51.100.4')
+    // Another secret, another name: it can't be computed without the Worker's.
+    expect(
+      await callerQuotaName(
+        { ACCOUNT_TICKET_SECRET: 'another-ticket-secret-of-at-least-32-chars' },
+        'buddies/register-caller',
+        '198.51.100.4'
+      )
+    ).not.toBe(name)
+  })
+
+  it('admits, like an outage, when the quota can’t be named', async () => {
+    const owner = await Owner.create(h, false)
+    h.env.ACCOUNT_TICKET_SECRET = undefined
+    const quotaCalls = vi.spyOn(h.env.BUDDY_REGISTRATION_QUOTA, 'get')
+    expect((await register('198.51.100.5', owner)).status).toBe(200)
+    expect(quotaCalls).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith('buddies: registration quota unavailable; allowing')
   })
 
   it('keeps only hourly counts and deletes itself a day after the newest', async () => {

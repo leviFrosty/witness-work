@@ -18,7 +18,8 @@
   },
   "workers_dev": false,
   "preview_urls": false,
-  "observability": { "enabled": true },
+  // Matches wrangler.jsonc: no invocation logs.
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
   "vars": { "WW_WEB_PROFILE": "local" },
   "env": {
     "beta": {

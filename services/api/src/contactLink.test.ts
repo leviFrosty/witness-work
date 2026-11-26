@@ -135,6 +135,17 @@ describe('GET /contacts', () => {
   })
 })
 
+describe('contact link page headers', () => {
+  it.each(['/c', '/contacts', `/c/${PAYLOAD}`])(
+    '%s is never cached or rewritten at the edge',
+    async (path) => {
+      const response = await request(path)
+
+      expect(response.headers.get('cache-control')).toBe('no-store, no-transform')
+    }
+  )
+})
+
 describe('GET /c/:payload (legacy)', () => {
   it('keeps the deep link but leaves the payload out of og:url and every meta tag', async () => {
     const page = await html(`/c/${PAYLOAD}`)

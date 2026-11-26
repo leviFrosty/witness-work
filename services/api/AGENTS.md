@@ -519,7 +519,8 @@ limit, auth, or kill switch, and `/admin/notes-import/reset` is 404. `GET
 through the session client, which shows Update Required over the whole app
 on a 426, so they'd lose the app instead of seeing the composer's own update
 message. A failed
-KV read lets the request through. The cutover, once the user decides to run
+KV read counts as off (426), as `auth:legacy`'s does: the old routes never
+come back because KV is down. The cutover, once the user decides to run
 it, in order:
 
 1. The Scribe AI app version is live on both stores.
@@ -716,10 +717,25 @@ minimum-version KV reads all start at once.
 
 Sentry traces retain 100% of development (a local worker) and Notes Import
 operation traffic. Beta counts as production here (its `APP_ATTEST_ENVIRONMENT`
-is `production`). Production status, HERE proxy, health, contact-link and other routine routes use
-10% trace sampling, overriding propagated parent sampling decisions. Error
-capture and contact-data redaction remain unchanged; Cloudflare logging retains
-its existing sampling configuration.
+is `production`). Production status, HERE proxy, health and other routine routes use
+10% trace sampling, overriding propagated parent sampling decisions. Contact
+link pages (`/c`, `/c/<payload>`, `/contacts`) are never traced, and answer
+`Cache-Control: no-store, no-transform` so Cloudflare never rewrites them (no
+Web Analytics beacon reporting a `/c/<payload>` URL). Error capture and
+contact-data redaction remain unchanged.
+
+Every Sentry event, transaction, span and breadcrumb keeps only the
+`content-type` and `content-length` headers (`ALLOWED_HEADERS` in
+`src/sentry.ts`): no credentials, ids, IPs, `cf-ray`, user agent or language,
+and no header someone adds later. A header is dropped unless it's listed, so
+think twice before listing one.
+
+Cloudflare's Workers Logs keep only the Worker's own `console` lines, on
+production and Beta: invocation logs are off (they'd keep every request's IP,
+URL with its query string, user agent and headers), and so are Workers traces
+(they'd keep subrequest URLs). `src/environments.test.ts` pins it. `wrangler
+tail` still shows a live request's URL and headers to whoever runs it, so
+credentials and ids still never go in a URL or a header the Worker sets.
 
 Because those traces record request URLs whole, `src/sentry.ts` cuts the value
 of every `token` query parameter (legacy run routes' subscribe token, `?token=`)
@@ -925,7 +941,8 @@ Links. Clients are iOS and Android
     through.
   - `inbox/register`: 2,000 validly signed calls per caller (account or IP,
     as above) per rolling day (`BuddyRegistrationQuota`, hourly counts under
-    a hashed caller key).
+    an HMAC of the caller key, `callerQuotaName` in
+    `src/accounts/rateCounter.ts`, so the name can't be reversed to an IP).
   - Per inbox, after the signature check: stored events per slot (10,000,
     16 MiB) and per inbox (128 MiB). `event/put` past them is 429
     `rate_limited`; nothing stored is dropped. `slot_usage` keeps the running
@@ -1019,8 +1036,8 @@ Links. Clients are iOS and Android
   ids, account ids, or tokens (access tokens included; Sentry drops
   `Authorization`, `Sec-WebSocket-Protocol`, and `x-buddies-*`). APNs and FCM requests use the `fetch` captured before
   Sentry wraps the global, so device tokens in APNs URLs stay out of Sentry
-  spans (FCM tokens travel only in request bodies). The Beta worker's 100%
-  Workers traces do record subrequest URLs, APNs included.
+  spans (FCM tokens travel only in request bodies). Workers traces are off on
+  every deployed worker, since they'd record subrequest URLs, APNs included.
 - **Not yet built** (required before any production rollout): bearer
   requests are attested once, when their session opens (App Attest or Play
   Integrity), so nothing per request is needed for them; legacy requests
@@ -1344,9 +1361,10 @@ web client authenticates `GET /accounts/v1/sync/live` and
 request with that header takes this path; one without it takes the native
 header path, unchanged.
 
-**Why a ticket, not the access token:** `wrangler tail`, and so Workers Logs,
-records `Sec-WebSocket-Protocol` in full, while it redacts `Authorization`.
-A 15-minute access token there would be a credential in Cloudflare's logs.
+**Why a ticket, not the access token:** `wrangler tail` shows
+`Sec-WebSocket-Protocol` in full, while it redacts `Authorization`, and so
+would Workers Logs if invocation logs were ever turned on. A 15-minute access
+token there would be a credential in Cloudflare's logs.
 A ticket that lands there names no id (its claims are encrypted), opens one
 socket kind for one id for 30 seconds, one socket at a time, and calls no
 other route.
@@ -1424,10 +1442,10 @@ other route.
   in a call (`admitLive`: account, session, slot, the token's `kep` and
   expiry, the ticket's hash), and the forwarded upgrade carries only the
   one-use id that call answers with (`x-ww-sync-admission`, good for 30 s).
-  Nothing about the caller is in a forwarded header, because **Workers Logs
-  record every request header, a forwarded request's too**
-  (`$workers.event.request.headers.*`). Don't put an id in a header the
-  Worker sets.
+  Nothing about the caller is in a forwarded header, because **`wrangler
+  tail` shows every request header, a forwarded request's too**, and Workers
+  Logs would keep them if invocation logs were ever turned on. Don't put an
+  id in a header the Worker sets.
 - **Forwarding, Buddies**: the DO gets the internal headers it already trusts
   (`x-buddies-session-account` and
   `x-buddies-payload`, built from the ticket's inbox id) plus `tokenExp`
@@ -1701,8 +1719,8 @@ in the PR). Code in `src/accounts/passkeys.ts` (handlers),
   (`dropRequestBody`). Logs name the op only (`guarded`).
 - **Web sign-up** (`webSignup.ts`, `turnstile.ts`): there's no device
   integrity on the web, so sign-up has Turnstile (managed widget, actions
-  `web-signup` and `web-recovery`; Siteverify gets `remoteip` and an
-  `idempotency_key`, and the answer's action and hostname, one of
+  `web-signup` and `web-recovery`; Siteverify gets an `idempotency_key` and
+  never the caller's IP (`remoteip`), and the answer's action and hostname, one of
   `WEB_APP_ORIGINS`' hosts, must match, except under Cloudflare's test
   secrets on a development worker only), caps, and a kill switch. A
   `turnstileToken` over 2,048 characters is `bad_request`. Caps live in an
@@ -1806,7 +1824,7 @@ wrangler secret put TURNSTILE_SECRET_KEY             # production (the owner)
 `turnstileToken` for sign-up and recovery without Siteverify, so automated QA
 can use the live Beta web app (`verifyTurnstile`; the witness-work
 `verify-witnesswork` skill, "Live Beta"). It rides in the body, never a header,
-because Workers Logs record request headers. Caps and the kill switch still
+because `wrangler tail` shows request headers. Caps and the kill switch still
 apply. Production has no switch, so the token does nothing there even if set
 (`src/environments.test.ts` pins it). The copy is in the Agents vault, "ww-api
 Turnstile QA bypass token (beta)". Rotate: put a new value in the vault, then
@@ -1972,9 +1990,10 @@ ADR 0029). Code in `src/accounts/supporter.ts` (store and `isAccountSupporter`),
 - **Privacy**: never log or report app user ids, account ids, tokens, the
   webhook's Authorization header, or webhook bodies. The webhook logs only the
   event type and how many linked customers it read. Sentry drops
-  `Authorization` from every event (`SECRET_HEADER` in `src/sentry.ts`), the
-  webhook's included, and RevenueCat reads use the pre-Sentry `fetch`, so the
-  app user id in RevenueCat's URL stays out of spans.
+  `Authorization` from every event (`ALLOWED_HEADERS` in `src/sentry.ts`), the
+  webhook's included, and every RevenueCat read uses the pre-Sentry `fetch`
+  (the default in `src/revenuecat.ts`), so the app user id in RevenueCat's URL
+  stays out of spans and breadcrumbs.
 
 Each deployed worker has its own webhook secret; keep copies in 1Password's Agents
 vault ("ww-api RevenueCat webhook secret (prod)" and "(beta)"). RevenueCat's
@@ -2610,7 +2629,7 @@ unchanged; the mode never changes. Same files, plus `scoped.test.ts` and
   `link/create` answer 403 `suspended` for a suspended account.
 - **Privacy**: never log or report a link token, verifier, link id, IP, or
   blob. Sentry drops `cf-connecting-ip` and the other IP headers from every
-  event (`SECRET_HEADER` in `src/sentry.ts`).
+  event (`ALLOWED_HEADERS` in `src/sentry.ts`).
 - **Schema**: added with `CREATE TABLE IF NOT EXISTS` and guarded `ALTER
   TABLE` (`ADDED_COLUMNS`) when an object starts, so older spaces pick it up
   with nulls and keep their rules. No new Durable Object class or migration

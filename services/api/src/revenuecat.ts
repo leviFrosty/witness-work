@@ -25,6 +25,15 @@ export const REVENUECAT_API_ORIGIN = 'https://api.revenuecat.com'
  */
 export const REVENUECAT_TIMEOUT_MS = 5_000
 
+/**
+ * Captured at module evaluation, before Sentry's fetch integration wraps
+ * `globalThis.fetch` on the first request. The wrapped fetch records each
+ * request URL in a span and a breadcrumb, and RevenueCat's URL holds the app
+ * user id, so every read uses this one unless a caller injects its own
+ * (tests, and callers that pass their own pre-Sentry fetch).
+ */
+const uninstrumentedFetch: typeof fetch = globalThis.fetch.bind(globalThis)
+
 export interface SupporterCheckArgs {
   apiKey: string
   appUserId: string
@@ -33,7 +42,10 @@ export interface SupporterCheckArgs {
    * name (witness-work ADR 0014); kept so existing callers still compile.
    */
   entitlementId?: string
-  /** Injectable for tests; defaults to global fetch. */
+  /**
+   * Injectable for tests; defaults to the global fetch as it was before
+   * Sentry wrapped it. Never pass the wrapped global.
+   */
   fetchImpl?: typeof fetch
   /**
    * RevenueCat's REST API origin; `REVENUECAT_API_ORIGIN` by default. The
@@ -129,7 +141,7 @@ export interface SupporterStatus {
 export const fetchSupporterStatus = async ({
   apiKey,
   appUserId,
-  fetchImpl = fetch,
+  fetchImpl = uninstrumentedFetch,
   apiOrigin = REVENUECAT_API_ORIGIN,
   nowMs = Date.now(),
   timeoutMs = REVENUECAT_TIMEOUT_MS,

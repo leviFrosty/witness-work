@@ -131,7 +131,7 @@ const signUp = async (fields: Parameters<PasskeyClient['signUp']>[1] = {}) => {
 }
 
 describe('POST /web/signup/options', () => {
-  it('verifies Turnstile with remoteip and an idempotency key, then mints the account', async () => {
+  it('verifies Turnstile with an idempotency key and no IP, then mints the account', async () => {
     callerIp = '203.0.113.50'
     const options = await client.signupOptions({ turnstileToken: 'tok' })
     expect(options.status).toBe(200)
@@ -139,7 +139,6 @@ describe('POST /web/signup/options', () => {
       {
         secret: PASS,
         response: 'tok',
-        remoteip: '203.0.113.50',
         idempotency_key: expect.stringMatching(/^[0-9a-f-]{36}$/),
       },
     ])
@@ -639,9 +638,8 @@ describe('POST /web/recovery', () => {
     expect(recovery.status).toBe(200)
     expect(recovery.body).toMatchObject({ ok: true, accountId: phone.accountId })
     expect(recovery.body.ticketExpiresAt).toBe(START + 2 * MINUTE)
-    expect(siteverify).toEqual([
-      expect.objectContaining({ secret: PASS, response: 'tok', remoteip: '203.0.113.130' }),
-    ])
+    expect(siteverify).toEqual([expect.objectContaining({ secret: PASS, response: 'tok' })])
+    expect(siteverify[0]).not.toHaveProperty('remoteip')
     const { reply } = await client.openWeb(phone.key, recovery.body.ticket, { appVersion: '1.46.0' })
     expect(reply).toMatchObject({ status: 201, body: { accountId: phone.accountId, platform: 'web' } })
     expect(sql('SELECT method FROM account_sessions WHERE platform = ?', 'web')).toEqual([{ method: 'recovery' }])

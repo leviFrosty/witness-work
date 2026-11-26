@@ -9,7 +9,10 @@
   "workers_dev": true,
   "preview_urls": false,
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": {
+      "invocation_logs": false
+    }
   },
   "env": {
     "dev": {
@@ -31,6 +34,12 @@
       "vars": {
         "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
         "BUCKET_NAME": "ww-updates-dev"
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "invocation_logs": false
+        }
       }
     },
     "beta": {
@@ -52,6 +61,12 @@
       "vars": {
         "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
         "BUCKET_NAME": "ww-updates-beta"
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "invocation_logs": false
+        }
       }
     },
     "prod": {
@@ -73,6 +88,12 @@
       "vars": {
         "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
         "BUCKET_NAME": "ww-updates-prod"
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "invocation_logs": false
+        }
       }
     }
   },

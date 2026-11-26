@@ -199,35 +199,69 @@ function scrubStrings(value: unknown, seen = new WeakSet<object>()): unknown {
 }
 
 /**
- * The SDK copies request headers into events (with `sendDefaultPii: false`
- * it leaves out only cookies), so drop every header that carries a
- * credential or an id outright:
- * - `authorization`: bearer tokens.
- * - `sec-websocket-protocol`: a browser live socket's offer, which carries
- *   its live ticket (src/liveSubprotocol.ts).
- * - `x-ww-admin-token` and `x-ww-dev-bypass`: the admin and dev bypass tokens.
- * - `x-buddies-*`: the Buddies live socket's signed envelope (holds the inbox
- *   id).
- * - `x-ww-payload`/`x-ww-signature` (or the legacy `x-ww-p`/`x-ww-s`):
- *   accounts' legacy `backup/put` envelope (account key and slot id).
- * - `x-ww-slot-id`: the bearer `backup/put`'s slot id.
- * - `x-ww-space-auth`, `x-ww-space-token` (and the Worker's own
- *   `x-ww-space-member-token`): the Shared Spaces live socket's space id and
- *   member id, its member token, and the token's hash.
- * - `cf-connecting-ip`, `cf-connecting-ipv6`, `cf-pseudo-ipv4`,
- *   `true-client-ip`, `x-real-ip`, `x-forwarded-for`: the caller's IP. The
- *   public guest ops (Shared Spaces' guest links) promise never to report
- *   a guest's IP, and no other route needs it in an event either.
+ * Headers an event may carry; every other one is dropped. The SDK copies
+ * every request header into events (with `sendDefaultPii: false` it leaves
+ * out only cookies), and Cloudflare and our clients send many that name the
+ * caller or the user's data: the IP (`cf-connecting-ip`, `x-forwarded-for`,
+ * `forwarded`), where they are (`cf-ipcountry`), their device and language
+ * (`user-agent`, `accept-language`), a per-request id Cloudflare can tie to
+ * the IP (`cf-ray`), credentials (`authorization`, `x-ww-admin-token`, live
+ * tickets in `sec-websocket-protocol`), and ids and metadata of the user's
+ * data (`x-buddies-*`, `x-ww-slot-id`, `x-ww-photo-name`, `x-ww-photo-meta`,
+ * `x-ww-sha256`, `x-ww-sync-admission`, `x-ww-live-ticket`, Shared Spaces'
+ * tokens). A list of what to drop always misses the next header someone
+ * adds, so this lists what to keep. Names are lowercase.
  */
-const SECRET_HEADER =
-  /^(authorization$|sec-websocket-protocol$|x-ww-admin-token$|x-ww-dev-bypass$|x-buddies-|x-ww-(p|s|payload|signature|slot-id|space-auth|space-token|space-member-token)$|cf-connecting-ipv?6?$|cf-pseudo-ipv4$|true-client-ip$|x-real-ip$|x-forwarded-for$)/i;
+const ALLOWED_HEADERS = new Set(['content-type', 'content-length']);
 
-function dropSecretHeaders(event: Event): void {
-  const headers = event.request?.headers;
-  if (!headers) return;
+const isAllowedHeader = (name: string): boolean =>
+  ALLOWED_HEADERS.has(name.toLowerCase());
+
+/** Deletes every header in `headers` that isn't allowed. */
+function keepAllowedHeaders(headers: Record<string, unknown> | undefined): void {
+  if (!headers || typeof headers !== 'object') return;
   for (const name of Object.keys(headers)) {
-    if (SECRET_HEADER.test(name)) delete headers[name];
+    if (!isAllowedHeader(name)) delete headers[name];
   }
+}
+
+/**
+ * Span and breadcrumb data name headers as OpenTelemetry attributes
+ * (`http.request.header.<name>`, `http.response.header.<name>`). This SDK
+ * doesn't set them today; this keeps a later one from sending them.
+ */
+const HEADER_ATTRIBUTE = /^http\.(?:request|response)\.header\.(.+)$/i;
+
+function keepAllowedHeaderAttributes(
+  data: Record<string, unknown> | undefined
+): void {
+  if (!data || typeof data !== 'object') return;
+  for (const key of Object.keys(data)) {
+    const header = HEADER_ATTRIBUTE.exec(key)?.[1];
+    if (header != null && !isAllowedHeader(header)) delete data[key];
+  }
+}
+
+/**
+ * Applies the header allowlist wherever an event carries headers: the
+ * request, the response context, the trace's and every span's data, and
+ * breadcrumbs. Also drops the `culture` context, which the SDK fills with
+ * the timezone Cloudflare places the caller in.
+ */
+function dropDisallowedHeaders(event: Event): void {
+  keepAllowedHeaders(event.request?.headers);
+  const contexts = event.contexts;
+  if (contexts) {
+    keepAllowedHeaders(
+      (contexts.response as { headers?: Record<string, unknown> } | undefined)
+        ?.headers
+    );
+    keepAllowedHeaderAttributes(contexts.trace?.data);
+    delete contexts.culture;
+  }
+  for (const span of event.spans ?? []) keepAllowedHeaderAttributes(span.data);
+  for (const breadcrumb of event.breadcrumbs ?? [])
+    keepAllowedHeaderAttributes(breadcrumb.data);
 }
 
 /**
@@ -297,7 +331,7 @@ function dropRequestBody(event: Event): void {
 }
 
 function scrubEvent<T extends Event>(event: T): T {
-  dropSecretHeaders(event);
+  dropDisallowedHeaders(event);
   dropRequestBody(event);
   redactQueryStringPairs(event);
   const scrubbed = scrubStrings(event) as T;
@@ -306,6 +340,7 @@ function scrubEvent<T extends Event>(event: T): T {
 }
 
 function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
+  keepAllowedHeaderAttributes(breadcrumb.data);
   return scrubStrings(breadcrumb) as Breadcrumb;
 }
 
@@ -322,6 +357,9 @@ export function nameTransactionAfterRoute(context: Context): void {
   rootSpan.updateName(`${context.req.method} ${route}`);
   rootSpan.setAttribute(Sentry.SEMANTIC_ATTRIBUTE_SENTRY_SOURCE, 'route');
 }
+
+const isContactLinkPath = (path: string | undefined) =>
+  path === '/c' || path === '/contacts' || !!path?.startsWith('/c/');
 
 export function createSentryConfig(environment: Environment): CloudflareOptions {
   return {
@@ -343,7 +381,10 @@ export function createSentryConfig(environment: Environment): CloudflareOptions 
       // 100% under its own paths.
       const isAttestationOperation =
         path?.startsWith('/attestation/') && path !== '/attestation/v1/status';
-      return isImportOperation || isAttestationOperation ? 1 : 0.1;
+      if (isImportOperation || isAttestationOperation) return 1;
+      // Contact link pages are never traced: `/c/<payload>` carries a whole
+      // contact in its path, and a trace is a record of the request.
+      return isContactLinkPath(path) ? 0 : 0.1;
     },
     sendDefaultPii: false,
     beforeSend: scrubEvent,

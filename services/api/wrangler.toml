@@ -442,19 +442,22 @@ namespace_id = "3008"   # distinct from prod's 1008 and dev's 2008
   limit = 120
   period = 60
 
-# Cloudflare Workers Observability — not inherited, so repeated for Beta.
-# Full sampling: Beta traffic is small, and this is where problems show first.
+# Cloudflare Workers Observability — repeated for Beta, as production's below.
+# Full sampling of what's kept: Beta traffic is small, and this is where
+# problems show first. Only the Worker's own console lines are kept. No
+# invocation logs, which would keep every request's IP, URL with its query
+# string, user agent and headers (admin and Buddies tokens, slot ids, photo
+# names), and no traces, which record subrequest URLs (APNs device tokens).
 [env.beta.observability]
 enabled = true
 head_sampling_rate = 1
 
   [env.beta.observability.logs]
   enabled = true
-  invocation_logs = true
+  invocation_logs = false
 
   [env.beta.observability.traces]
-  enabled = true
-  head_sampling_rate = 1
+  enabled = false
 
 # --- Development (local only) ---------------------------------------------------
 # Nothing is deployed from this block. It is the config `wrangler dev --env dev`
@@ -1369,10 +1372,16 @@ new_sqlite_classes = ["AccountRateCounter"]
 tag = "v12"
 new_sqlite_classes = ["AccountApproval"]
 
+# Workers Logs keep the Worker's own console lines (ops tune from them, for
+# example `buddies: limit hit`), never invocation logs: those would keep every
+# request's IP, URL with its query string, user agent and headers. Traces stay
+# off (the default) because they record subrequest URLs. `src/environments.test.ts`
+# pins this for production and Beta.
 [observability]
 enabled = true
-head_sampling_rate = 1 # optional. default = 1.
+head_sampling_rate = 1
 logs.persist = true
+logs.invocation_logs = false
 
 # Secrets should be set via:
 # wrangler secret put HERE_API_KEY

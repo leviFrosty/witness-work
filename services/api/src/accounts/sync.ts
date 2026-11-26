@@ -590,7 +590,7 @@ const handleLive = async (c: AppContext): Promise<Response> => {
       return buddiesErrorResponse('upgrade_required')
     if (!isSyncSlotId(slotId)) return buddiesErrorResponse('bad_request')
     // Who the socket is for goes to the index in a call, and the upgrade
-    // carries only the one-use id it answers with: Workers Logs record
+    // carries only the one-use id it answers with: `wrangler tail` shows
     // request headers, the forwarded request's too.
     const index = syncIndex(c.env, accountId)
     const admitted = await index.admitLive({

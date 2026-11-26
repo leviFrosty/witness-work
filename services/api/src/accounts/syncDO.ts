@@ -1269,7 +1269,7 @@ export class AccountSync extends DurableObject<Environment> {
    * Admits a live socket the Worker verified (the token or the ticket, the
    * switches, the entitlement): who it's for, kept in memory for the upgrade
    * that follows (`fetch`) under a random one-use id. Nothing about the
-   * caller travels in the upgrade's headers, which Workers Logs record.
+   * caller travels in the upgrade's headers, which `wrangler tail` shows.
    *
    * `slotId` is the device's own slot, so its own puts don't echo back.
    * `expiresAt` is a browser socket's token expiry, when the alarm closes

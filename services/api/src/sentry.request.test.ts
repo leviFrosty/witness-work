@@ -71,7 +71,14 @@ async function sendThroughSdk(url: string, upstream: string): Promise<Sent> {
     return c.text('ok')
   })
   const request = new Request(url, {
-    headers: { referer: url, accept: 'text/event-stream' },
+    headers: {
+      referer: url,
+      accept: 'text/event-stream',
+      'user-agent': 'WitnessWork/1.50 iPhone',
+      'cf-connecting-ip': '203.0.113.7',
+      'cf-ray': '8f00000000000000-YYZ',
+      'content-type': 'application/json',
+    },
   })
   const flushes: Promise<unknown>[] = []
 
@@ -132,8 +139,14 @@ describe('Sentry on a request with a subscribe token in its URL', () => {
     expect(error.request).toMatchObject({
       url: redacted,
       query_string: 'token=[redacted]&lastEventId=3',
-      headers: { referer: redacted },
     })
+    // Only the allowed headers leave: no IP, user agent, Cloudflare ray id,
+    // or referer.
+    const kept = { 'content-type': 'application/json' }
+    expect((error.request as { headers: unknown }).headers).toEqual(kept)
+    expect((transaction.request as { headers: unknown }).headers).toEqual(kept)
+    expect(sent).not.toContain('203.0.113.7')
+    expect(sent).not.toContain('WitnessWork/1.50')
     expect(transaction.transaction).toBe(
       `GET /notes-import/${IMPORT_ID}/events`
     )
@@ -168,7 +181,6 @@ describe('Sentry on a request with a subscribe token in its URL', () => {
     expect(error.request).toMatchObject({
       url: redacted,
       query_string: 'lastEventId=3&to%6Ben=[redacted]',
-      headers: { referer: redacted },
     })
     expect(traceData(transaction)).toMatchObject({
       'url.full': redacted,

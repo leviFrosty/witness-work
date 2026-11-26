@@ -45,6 +45,28 @@ export const counterName = async (
   return bytesToBase64Url(new Uint8Array(mac))
 }
 
+/**
+ * The name of a caller's rolling-day quota (`BuddyRegistrationQuota`) under
+ * `label`. `callerKey` is `buddiesCallerKey`'s (the client IP, IPv6 by /64)
+ * or, for a bearer request, `buddiesAccountCallerKey`'s hashed account. The
+ * name is a Durable Object's, kept by Cloudflare while the object holds
+ * counts, so it's an HMAC like `counterName`'s, never a plain SHA-256, which
+ * anyone could reverse by hashing every IPv4 address.
+ *
+ * Trade-off: the key doesn't rotate. A daily key would keep a name from
+ * linking one caller's days, but the quota is a rolling day of hourly counts
+ * in one object, so every check would have to read yesterday's object too.
+ * A fixed key is enough here: the object deletes itself a day after its last
+ * count, so a name outlives the caller's activity by at most a day, and
+ * reversing it takes the Worker's secret. Rotating `ACCOUNT_TICKET_SECRET`
+ * starts every quota over (it only ever admits more).
+ */
+export const callerQuotaName = (
+  env: Pick<Environment, 'ACCOUNT_TICKET_SECRET'>,
+  label: string,
+  callerKey: string
+): Promise<string> => counterName(env, label, callerKey, 'caller-quota')
+
 /** The counter object named `name`. */
 export const rateCounter = (
   env: Pick<Environment, 'ACCOUNT_RATE_COUNTER'>,

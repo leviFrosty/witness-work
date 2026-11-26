@@ -247,7 +247,7 @@ WitnessWork once per session and then calls with short-lived bearer tokens:
   Buddies' `inbox/live`) with a 30-second ticket from
   `POST /accounts/v1/live/ticket` (`{ socket, id }`, live session only),
   offered as `Sec-WebSocket-Protocol: ww.v1, ticket.<ticket>` instead of
-  headers (never the access token: Cloudflare's logs record that header; the
+  headers (never the access token: `wrangler tail` shows that header; the
   ticket's claims are encrypted, and it opens one socket at a time); the 101 answers
   `ww.v1`, and the socket closes with `4004 "expired"` when the access token
   the ticket was minted with expires. See `AGENTS.md`, "Web app

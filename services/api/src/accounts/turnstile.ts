@@ -6,8 +6,10 @@ import { isTurnstileToken } from './contracts'
  * Cloudflare Turnstile (witness-work `docs/passkeys-protocol.md`, "Web
  * sign-up"): managed widgets, actions `web-signup` and `web-recovery`,
  * verified in the Worker with Siteverify before anything else happens. The
- * request carries the caller's IP (`remoteip`) and an `idempotency_key`, so
- * a retry after a dropped connection can't be counted as a second use.
+ * request carries an `idempotency_key`, so a retry after a dropped connection
+ * can't be counted as a second use. It never carries the caller's IP
+ * (`remoteip`, optional): the widget already checked the browser, so the
+ * Worker doesn't send an IP alongside a sign-up or recovery.
  *
  * The answer must name the action, and a hostname in `TURNSTILE_HOSTNAMES`:
  * the host of the web app's Turnstile frame (witness-work
@@ -23,7 +25,7 @@ import { isTurnstileToken } from './contracts'
  * secret `TURNSTILE_QA_BYPASS_TOKEN` passes as a token for either action
  * without asking Siteverify, so automated QA can sign up and recover on the
  * web. It travels as the request body's `turnstileToken`, never in a header,
- * because Workers Logs record every request header. Caps, the kill switch and
+ * because `wrangler tail` shows every request header. Caps, the kill switch and
  * everything after the check still apply.
  *
  * Privacy: never log the token, the secret, or the IP.
@@ -158,7 +160,7 @@ const post = async (body: Record<string, string>): Promise<SiteverifyAnswer> => 
  */
 export const verifyTurnstile = async (
   env: TurnstileEnv,
-  input: { token: unknown; action: TurnstileAction; remoteip: string | null }
+  input: { token: unknown; action: TurnstileAction }
 ): Promise<TurnstileOutcome> => {
   const secret = turnstileSecret(env)
   if (!secret) return { ok: false, unavailable: true }
@@ -174,7 +176,6 @@ export const verifyTurnstile = async (
     secret,
     response: input.token,
     idempotency_key: crypto.randomUUID(),
-    ...(input.remoteip ? { remoteip: input.remoteip } : {}),
   }
   let answer: SiteverifyAnswer | null = null
   for (let attempt = 0; attempt < 2 && answer == null; attempt++) {

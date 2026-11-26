@@ -203,7 +203,7 @@ describe('Sentry scrubbers', () => {
       request: {
         url: LINK,
         method: 'GET',
-        headers: { referer: LINK, 'user-agent': 'Slackbot-LinkExpanding' },
+        headers: { referer: LINK, 'content-type': 'text/html' },
       },
       exception: { values: [{ type: 'Error', value: `Bad link ${LINK}` }] },
       breadcrumbs: [{ category: 'fetch', data: { url: LINK } }],
@@ -216,10 +216,7 @@ describe('Sentry scrubbers', () => {
 
     expect(JSON.stringify(scrubbed)).not.toContain(PAYLOAD)
     expect(scrubbed.request?.url).toBe(REDACTED_LINK)
-    expect(scrubbed.request?.headers).toEqual({
-      referer: REDACTED_LINK,
-      'user-agent': 'Slackbot-LinkExpanding',
-    })
+    expect(scrubbed.request?.headers).toEqual({ 'content-type': 'text/html' })
     expect(scrubbed.exception?.values?.[0].value).toBe(
       `Bad link ${REDACTED_LINK}`
     )
@@ -268,113 +265,85 @@ describe('Sentry scrubbers', () => {
     })
   })
 
-  it('drops the Buddies live-socket auth headers from events and transactions', () => {
+  it('keeps only content-type and content-length of every header, wherever headers appear', () => {
+    // Credentials, ids, the caller's IP and device, and every header nobody
+    // listed: the allowlist doesn't need to know a header to drop it.
     const headers = () => ({
-      'x-buddies-payload': 'eyJpbmJveElkIjoiQUFBQUFBQUFBQUFBQUFBQUFBQUFBQSJ9',
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.e30.c2ln',
+      'x-ww-admin-token': 'admin-secret',
+      'X-WW-Dev-Bypass': 'bypass-secret',
+      'Sec-WebSocket-Protocol': 'ww.v1, ticket.eyJ0eXAiOiJ3dy1saXZlIn0.c2ln',
+      'x-buddies-payload': 'eyJpbmJveElkIjoiQUFBQSJ9',
       'X-Buddies-Signature': 'c2lnbmF0dXJl',
-      'x-buddies-p': 'eyJpbmJveElkIjoiQUFBQUFBQUFBQUFBQUFBQUFBQUFBQSJ9',
-      'X-Buddies-S': 'c2lnbmF0dXJl',
-      upgrade: 'websocket',
-    })
-    const error: ErrorEvent = {
-      type: undefined,
-      request: { url: 'https://ww-proxy.test/buddies/v1/inbox/live', headers: headers() },
-    }
-    const transaction: TransactionEvent = {
-      type: 'transaction',
-      request: { url: 'https://ww-proxy.test/buddies/v1/inbox/live', headers: headers() },
-    }
-
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual({
-      upgrade: 'websocket',
-    })
-    expect(
-      (config.beforeSendTransaction!(transaction, {}) as TransactionEvent).request?.headers
-    ).toEqual({ upgrade: 'websocket' })
-  })
-
-  it('drops the account backup envelope headers, and only those', () => {
-    const error: ErrorEvent = {
-      type: undefined,
-      request: {
-        url: 'https://ww-proxy.test/accounts/v1/backup/put',
-        headers: {
-          'x-ww-payload': 'eyJhY2NvdW50UHViIjoiQUFBQSJ9',
-          'X-WW-Signature': 'c2lnbmF0dXJl',
-          'x-ww-p': 'eyJhY2NvdW50UHViIjoiQUFBQSJ9',
-          'X-WW-S': 'c2lnbmF0dXJl',
-          'x-ww-sha256': 'kept',
-          'content-type': 'application/octet-stream',
-        },
-      },
-    }
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual({
-      'x-ww-sha256': 'kept',
-      'content-type': 'application/octet-stream',
-    })
-  })
-
-  it('drops the bearer backup upload’s slot id', () => {
-    const error: ErrorEvent = {
-      type: undefined,
-      request: {
-        url: 'https://ww-proxy.test/accounts/v1/backup/put',
-        headers: {
-          Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.e30.c2ln',
-          'X-WW-Slot-Id': 'AAAAAAAAAAAAAAAAAAAAAA',
-          'x-ww-sha256': 'kept',
-          'content-length': '42',
-        },
-      },
-    }
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual({
-      'x-ww-sha256': 'kept',
+      'x-ww-payload': 'eyJhY2NvdW50UHViIjoiQUFBQSJ9',
+      'X-WW-S': 'c2lnbmF0dXJl',
+      'X-WW-Slot-Id': 'AAAAAAAAAAAAAAAAAAAAAA',
+      'X-WW-Space-Token': 'c2VjcmV0',
+      'x-ww-photo-name': 'photo-name',
+      'x-ww-photo-meta': 'sealed-meta',
+      'x-ww-sha256': 'digest',
+      'x-ww-sync-admission': 'admission',
+      'x-ww-live-ticket': 'ticket-hash',
+      'cf-connecting-ip': '203.0.113.7',
+      'x-forwarded-for': '203.0.113.7',
+      forwarded: 'for=203.0.113.7',
+      'cf-ray': '8f00000000000000-YYZ',
+      'cf-ipcountry': 'CA',
+      'user-agent': 'WitnessWork/1.50 iPhone',
+      'accept-language': 'fr-CA',
+      referer: 'https://app.witnesswork.app/contacts',
+      'x-someday-new-header': 'unknown',
+      'Content-Type': 'application/octet-stream',
       'content-length': '42',
     })
-  })
-
-  it('drops the Shared Spaces live socket’s member and token headers from events and transactions', () => {
-    const headers = () => ({
-      'X-WW-Space-Auth': 'eyJzcGFjZUlkIjoiQUFBQSJ9',
-      'X-WW-Space-Token': 'c2VjcmV0LXRva2VuLWJ5dGVzLXRoYXQtYXJlLTMyLWxvbmc',
-      'X-WW-Space-Member-Token': '{"spaceId":"AAAA","tokenHash":"BBBB"}',
-      'x-ww-spaces': 'kept',
-      'x-ww-space-authority': 'kept',
-      upgrade: 'websocket',
+    const kept = { 'Content-Type': 'application/octet-stream', 'content-length': '42' }
+    const attributes = () => ({
+      'url.full': 'https://ww-proxy.test/accounts/v1/sync/put',
+      'http.request.header.x-ww-slot-id': 'AAAAAAAAAAAAAAAAAAAAAA',
+      'http.request.header.user_agent': 'WitnessWork/1.50 iPhone',
+      'http.response.header.content-type': 'application/json',
     })
-    const kept = {
-      'x-ww-spaces': 'kept',
-      'x-ww-space-authority': 'kept',
-      upgrade: 'websocket',
+    const keptAttributes = {
+      'url.full': 'https://ww-proxy.test/accounts/v1/sync/put',
+      'http.response.header.content-type': 'application/json',
     }
-    const url = 'https://ww-proxy.test/spaces/v1/live'
-    const error: ErrorEvent = { type: undefined, request: { url, headers: headers() } }
-    const transaction: TransactionEvent = {
-      type: 'transaction',
-      request: { url, headers: headers() },
-    }
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual(kept)
-    expect(
-      (config.beforeSendTransaction!(transaction, {}) as TransactionEvent).request?.headers
-    ).toEqual(kept)
-  })
+    const url = 'https://ww-proxy.test/accounts/v1/sync/put'
 
-  it('drops a browser live socket’s offer, which holds its ticket', () => {
-    const error: ErrorEvent = {
-      type: undefined,
-      request: {
-        url: 'https://ww-proxy.test/accounts/v1/sync/live',
-        headers: {
-          'Sec-WebSocket-Protocol': 'ww.v1, ticket.eyJ0eXAiOiJ3dy1saXZlIn0.c2ln',
-          'x-ww-sync-expires-at': '1792412100000',
-          origin: 'http://localhost:8081',
+    const error = config.beforeSend!(
+      {
+        type: undefined,
+        request: { url, headers: headers() },
+        contexts: {
+          trace: { trace_id: 't', span_id: 's', data: attributes() },
+          response: { status_code: 500, headers: headers() },
+          culture: { timezone: 'America/Toronto' },
         },
+        breadcrumbs: [{ category: 'fetch', data: attributes() }],
       },
-    }
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual({
-      'x-ww-sync-expires-at': '1792412100000',
-      origin: 'http://localhost:8081',
-    })
+      {}
+    ) as ErrorEvent
+    expect(error.request?.headers).toEqual(kept)
+    expect(error.contexts?.response?.headers).toEqual(kept)
+    expect(error.contexts?.trace?.data).toEqual(keptAttributes)
+    expect(error.contexts?.culture).toBeUndefined()
+    expect(error.breadcrumbs?.[0].data).toEqual(keptAttributes)
+
+    const transaction = config.beforeSendTransaction!(
+      {
+        type: 'transaction',
+        request: { url, headers: headers() },
+        contexts: { trace: { trace_id: 't', span_id: 's', data: attributes() } },
+        spans: [{ span_id: 'c', trace_id: 't', start_timestamp: 0, data: attributes() }],
+      },
+      {}
+    ) as TransactionEvent
+    expect(transaction.request?.headers).toEqual(kept)
+    expect(transaction.contexts?.trace?.data).toEqual(keptAttributes)
+    expect(transaction.spans?.[0].data).toEqual(keptAttributes)
+
+    expect(
+      config.beforeBreadcrumb!({ category: 'fetch', data: attributes() })?.data
+    ).toEqual(keptAttributes)
   })
 
   it('drops request bodies (passkey responses, tickets, challenge tokens)', () => {
@@ -391,30 +360,6 @@ describe('Sentry scrubbers', () => {
     const scrubbedTransaction = config.beforeSendTransaction!(transaction, {}) as TransactionEvent
     expect(scrubbedError.request).toEqual({ url: 'https://ww-proxy.test/accounts/v1/passkeys/assert', method: 'POST' })
     expect(JSON.stringify(scrubbedTransaction)).not.toContain('secret')
-  })
-
-  it('drops bearer, admin, and dev bypass tokens from events and transactions', () => {
-    const headers = () => ({
-      Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.e30.c2ln',
-      'x-ww-admin-token': 'admin-secret',
-      'X-WW-Dev-Bypass': 'bypass-secret',
-      'x-authorization-hint': 'kept',
-      accept: 'application/json',
-    })
-    const kept = { 'x-authorization-hint': 'kept', accept: 'application/json' }
-    const error: ErrorEvent = {
-      type: undefined,
-      request: { url: 'https://ww-proxy.test/accounts/v1/account/info', headers: headers() },
-    }
-    const transaction: TransactionEvent = {
-      type: 'transaction',
-      request: { url: 'https://ww-proxy.test/admin/accounts/status', headers: headers() },
-    }
-
-    expect((config.beforeSend!(error, {}) as ErrorEvent).request?.headers).toEqual(kept)
-    expect(
-      (config.beforeSendTransaction!(transaction, {}) as TransactionEvent).request?.headers
-    ).toEqual(kept)
   })
 
   it('cuts subscribe tokens from URLs, query strings, spans, and breadcrumbs', () => {
@@ -448,7 +393,8 @@ describe('Sentry scrubbers', () => {
     expect(error.request).toEqual({
       url: redactedUrl,
       query_string: 'token=[redacted]&lastEventId=3',
-      headers: { referer: redactedUrl, accept: 'text/event-stream' },
+      // The referer, which repeats the URL, isn't an allowed header.
+      headers: {},
     })
     expect(error.contexts?.trace?.data).toEqual({
       'url.full': redactedUrl,
@@ -540,10 +486,16 @@ describe('trace sampling', () => {
     createSentryConfig({ APP_ATTEST_ENVIRONMENT: development ? 'development' : 'production' } as Environment)
       .tracesSampler!({ name, transactionContext: { name }, parentSampled })
 
-  it.each(['GET /notes-import/status', 'GET /attestation/v1/status', 'GET /geocode', 'GET /autocomplete', 'GET /health', 'GET /c/private-payload', 'GET /contacts', 'GET /unknown'])(
+  it.each(['GET /notes-import/status', 'GET /attestation/v1/status', 'GET /geocode', 'GET /autocomplete', 'GET /health', 'GET /unknown'])(
     'samples routine transaction %s at 10%, including sampled parents', (name) => {
       expect(sample(name)).toBe(0.1)
       expect(sample(name, false, true)).toBe(0.1)
+    }
+  )
+  it.each(['GET /c/private-payload', 'GET /c', 'GET /contacts'])(
+    'never traces contact link page %s, even with a sampled parent', (name) => {
+      expect(sample(name)).toBe(0)
+      expect(sample(name, false, true)).toBe(0)
     }
   )
   it.each(['POST /notes-import', 'POST /notes-import/kickoff', 'POST /notes-import/challenge', 'POST /notes-import/attest', 'GET /notes-import/id/events', 'POST /attestation/v1/challenge', 'POST /attestation/v1/register', 'POST /attestation/v1/verify'])(

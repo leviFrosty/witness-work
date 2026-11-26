@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { unstable_readConfig } from 'wrangler'
 
 /**
  * The three environments in wrangler.toml, pinned where a slip would cross
@@ -268,6 +270,38 @@ describe('wrangler.toml environments', () => {
     // `--env dev` deploys only an update Worker (wrangler-updates.json).
     for (const script of Object.values(scripts)) {
       if (/wrangler deploy\b.*--env dev\b/.test(script)) expect(script).toContain('--config wrangler-updates.json')
+    }
+  })
+})
+
+/**
+ * Deployed Workers keep their own console lines in Workers Logs and nothing
+ * Cloudflare records about a request: invocation logs would keep every
+ * request's IP, URL with its query string, user agent and headers (the admin
+ * token, Buddies envelopes, slot ids, photo names), and traces record
+ * subrequest URLs (APNs device tokens). Read through Wrangler, so inheritance
+ * is Wrangler's own.
+ */
+describe('Workers observability', () => {
+  const observability = (config: string, env: string | undefined) =>
+    unstable_readConfig(
+      { config: fileURLToPath(new URL(`../${config}`, import.meta.url)), env },
+      { hideWarnings: true }
+    ).observability
+
+  it('keeps console logs, without invocation logs or traces, in Beta and production', () => {
+    for (const env of [undefined, 'beta']) {
+      const settings = observability('wrangler.toml', env)
+      expect(settings?.enabled, env ?? 'production').toBe(true)
+      expect(settings?.logs?.persist ?? true, env ?? 'production').toBe(true)
+      expect(settings?.logs?.invocation_logs, env ?? 'production').toBe(false)
+      expect(settings?.traces?.enabled ?? false, env ?? 'production').toBe(false)
+    }
+  })
+
+  it('keeps no invocation logs for any update Worker', () => {
+    for (const env of ['dev', 'beta', 'prod']) {
+      expect(observability('wrangler-updates.json', env)?.logs?.invocation_logs, env).toBe(false)
     }
   })
 })

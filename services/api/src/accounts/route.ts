@@ -12,12 +12,12 @@ import {
 } from './store'
 import {
   guarded,
-  quotaName,
   refuseAtEdge,
   refuseOverDailyQuota,
   verifiedBody,
 } from './signed'
 import { authenticateAccount, bearerOrLegacy } from './auth'
+import { callerQuotaName } from './rateCounter'
 import { refuseLegacyAuth } from './legacySwitch'
 import { handoffHandlers } from './handoff'
 import { backupHandlers } from './backup'
@@ -127,7 +127,7 @@ const handleRegister = guarded('account/register', async (c) => {
   const callerKey = buddiesCallerKey(c.req.header('CF-Connecting-IP'))
   const refused = await refuseOverDailyQuota(
     c.env,
-    await quotaName('register-caller', callerKey),
+    callerQuotaName(c.env, 'register-caller', callerKey),
     undefined,
     'account/register',
     'registrationsPerDay'

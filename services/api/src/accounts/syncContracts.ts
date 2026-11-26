@@ -73,7 +73,7 @@ export const SYNC_HEADERS = {
    * A live upgrade's admission, on the request the Worker forwards to the DO:
    * a random one-use id `admitLive` gave it. Who the socket is for (the
    * account, the session, the slot, the expiry) goes to the DO in that call,
-   * never in a header: Workers Logs record every request header, the
+   * never in a header: `wrangler tail` shows every request header, the
    * forwarded request's too. Set only by the Worker.
    */
   admission: 'x-ww-sync-admission',

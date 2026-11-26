@@ -12,7 +12,6 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { syncKey } from '@/lib/syncCopy'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { isDataProtectionRegion } from '@/lib/dataProtection'
 import confirmDataProtectionOn from '@/lib/confirmDataProtectionOn'
@@ -59,7 +58,7 @@ const DataProtection = ({ goBack, goNext }: Props) => {
             accessibilityRole='header'
             style={[styles.stepTitle, { fontFamily: theme.fonts.bold }]}
           >
-            {i18n.t('dataProtectionTitle')}
+            {i18n.t('dataProtectionOnboardingTitle')}
           </Text>
           <Text
             style={{
@@ -116,7 +115,7 @@ const DataProtection = ({ goBack, goNext }: Props) => {
               </Text>
               <InfoPopover
                 title={i18n.t('dataProtectionInfoTitle')}
-                description={i18n.t(syncKey('dataProtectionInfoDesc'))}
+                description={i18n.t('dataProtectionInfoDesc')}
               />
             </View>
             <View>

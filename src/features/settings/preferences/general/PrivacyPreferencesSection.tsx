@@ -126,7 +126,7 @@ const PrivacyPreferencesSection = () => {
             <InputRowContainer
               leftIcon={ShieldCheckIcon}
               label={i18n.t('dataProtectionSwitchLabel')}
-              info={i18n.t(syncKey('dataProtectionInfoDesc'))}
+              info={i18n.t('dataProtectionInfoDesc')}
               controlWidth='auto'
               style={{ justifyContent: 'space-between' }}
             >

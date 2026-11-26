@@ -15,10 +15,12 @@ const sections = [
         photos), backups, and Buddies content are encrypted end to end; we
         cannot read them. Our server sees a random account ID with no name
         attached, which devices sync and on what platform, and the size and time
-        of each upload, but never what's inside. Photos are stored at full size,
-        up to 2 GB per account, and the server cannot tell which contact or note
-        a photo belongs to. Optional iCloud and Google Drive sync are not
-        encrypted end to end by WitnessWork.
+        of each upload, but never what's inside. Cloud Sync stores photos as
+        your device saved them, up to 200 MB per account or 5 GB for Supporters,
+        and the server cannot tell which contact or note a photo belongs to.
+        Optional iCloud and Google Drive sync are not encrypted end to end by
+        WitnessWork. If you turn on calendar sync, your plans and follow-ups go
+        to your device's calendar account, such as iCloud or Google.
       </p>
     ),
   },
@@ -70,12 +72,21 @@ const sections = [
     title: 'Online features',
     body: (
       <p>
-        AI Notes Import sends submitted notes to AI service providers. Address
-        and Help Center searches send search information to mapping and search
-        providers. Android maps process map activity, device and connection
-        data, and location when permitted. Buddies shares selected plans,
-        profile information, and other content with your buddies; notification
-        providers deliver alerts.
+        Scribe AI sends what you ask it, and the records it needs to answer
+        (such as contact names, notes, and photos), through OpenRouter to AI
+        providers that keep no copy. With each request, OpenRouter receives an
+        ID made from your account ID, never the ID itself. Our server does not
+        store your requests or the answers. Address searches go through our
+        server to HERE, which never sees your IP address, or to your device's
+        own map service from Apple or Google. Help Center searches go to
+        Cloudflare. Maps on iPhone and Android process map activity, device and
+        connection data, and location when permitted. When a note has a link,
+        the app loads its preview from that website, which sees your IP address.
+        In Data protection mode, a preview loads only when you tap it. Buddies,
+        shared territories, and shared cars share what you choose with the
+        people you invite, encrypted end to end. Apple and Google deliver
+        Buddies alerts. They see only a general notice, because the alert's
+        content is encrypted.
       </p>
     ),
   },
@@ -106,10 +117,15 @@ const sections = [
         We and our service providers use account identifiers, device and
         security information, purchase status, usage statistics, crash reports,
         and optional survey responses to run, protect, and improve WitnessWork.
-        Accounts require no name, email, or phone number. Usage statistics
-        exclude your records and typed text but may include your Publisher role,
-        which can indicate religious affiliation. Hosting providers process
-        connection data, including IP addresses.
+        Accounts require no name, email, or phone number. Usage statistics and
+        crash reports go to PostHog. They exclude your records and typed text
+        but may include your Publisher role, which can indicate religious
+        affiliation. PostHog discards your IP address and does not look up your
+        location. If usage statistics are on, the app also reports which app
+        update it runs, under a random ID for each install. Errors on our
+        servers go to Sentry, without IP addresses or account IDs. Hosting
+        providers process connection data, including IP addresses, but our
+        servers do not keep request logs.
       </p>
     ),
   },
@@ -134,8 +150,7 @@ const sections = [
     title: 'Retention',
     body: (
       <p>
-        AI imports are normally deleted from our servers within about an hour;
-        limited usage and abuse-prevention records remain. Our Cloud Sync copies
+        Scribe AI keeps only usage counts for its limits. Our Cloud Sync copies
         and backups expire within 400 days of their last upload; account
         security history expires after 400 days. Deleted Cloud Sync photos are
         removed 30 days later, and all of an account's Cloud Sync photos are
@@ -155,11 +170,12 @@ const sections = [
         In the app, you can delete records, manage sync and backups, remove
         passkeys, sign out devices and browsers, and remove Buddies data. You
         can turn usage statistics off in Privacy settings, which also stops
-        session replay; this does not stop crash reports, feature checks, or
-        submitted surveys. Manage location permission in your device or browser
-        settings. For privacy questions, or to request deletion of server data
-        or of your checkout email and billing address (except records we must
-        keep by law), email{' '}
+        session replay and app update reports. Crash reports have their own
+        switch there. Neither switch stops feature checks or submitted surveys.
+        Manage location permission in your device or browser settings. For
+        privacy questions, or to request deletion of server data or of your
+        checkout email and billing address (except records we must keep by law),
+        email{' '}
         <a
           href='mailto:support@witnesswork.app?subject=WitnessWork%20Privacy'
           className='ww-link'
@@ -179,7 +195,7 @@ export default function WitnessWorkPrivacy() {
       eyebrow='Privacy'
       title='Privacy Policy'
       description='What WitnessWork collects, why, and your choices.'
-      updated='Updated November 4, 2026'
+      updated='Updated November 26, 2026'
       sections={sections}
     />
   )

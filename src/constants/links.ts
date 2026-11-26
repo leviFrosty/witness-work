@@ -31,7 +31,6 @@ export default {
   hourglassBase: 'https://app.hourglass-app.com/report/submit?',
   bugReport: `${githubRepo}/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D`,
   featureRequest: `${githubRepo}/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D`,
-  donate: 'https://ko-fi.com/leviwilkerson',
   termsOfUse: `${site}/terms`,
   helpCenterSite: site,
   helpCenterManifest: `${site}/help/bundle/manifest.json`,

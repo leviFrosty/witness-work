@@ -76,6 +76,15 @@ describe('_headers', () => {
   })
 })
 
+describe('fonts', () => {
+  test('are cached forever', async () => {
+    const { headersFile } = await siteFiles()
+    expect(rule(headersFile(), '/fonts/*').filter(Boolean)).toEqual([
+      'Cache-Control: public, max-age=31536000, immutable',
+    ])
+  })
+})
+
 describe('sitemap.xml', () => {
   test('lists canonical pages with their translations', async () => {
     const { sitemapXml, center } = await siteFiles()

@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Platform } from 'react-native'
 import * as Font from 'expo-font'
+import {
+  ArefRuqaa_400Regular,
+  ArefRuqaa_700Bold,
+} from '@expo-google-fonts/aref-ruqaa'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
+import links from '@/constants/links'
 import { fonts } from '@/constants/theme'
+import { HOSTED_HANDWRITING_FONTS } from '@/features/service-reports/lib/hostedHandwritingFonts'
 import { loadFonts } from '@/lib/fonts/loadFonts'
 
 const FALLBACK = 'Kalam_400Regular'
@@ -19,22 +25,27 @@ const loadBundled = () =>
     bundledLoad = undefined
   }))
 
-const REMOTE_FONTS: Record<string, string> = {
-  Gaegu_400Regular:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/gaegu/Gaegu-Regular.ttf',
-  Gaegu_700Bold:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/gaegu/Gaegu-Bold.ttf',
-  KleeOne_400Regular:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-Regular.ttf',
-  KleeOne_600SemiBold:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-SemiBold.ttf',
-  MaShanZheng_400Regular:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf',
+const BUNDLED_FONTS: Record<string, number> = {
+  ArefRuqaa_400Regular,
+  ArefRuqaa_700Bold,
+}
 
-  ArefRuqaa_400Regular:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/arefruqaa/ArefRuqaa-Regular.ttf',
-  ArefRuqaa_700Bold:
-    'https://raw.githubusercontent.com/google/fonts/main/ofl/arefruqaa/ArefRuqaa-Bold.ttf',
+const hasFace = (family: string) =>
+  family in BUNDLED_FONTS || family in HOSTED_HANDWRITING_FONTS
+
+async function loadFaces(families: string[]) {
+  const bundled: Record<string, number> = {}
+  const hosted: Record<string, string> = {}
+  for (const family of families) {
+    if (family in BUNDLED_FONTS) bundled[family] = BUNDLED_FONTS[family]
+    else
+      hosted[family] =
+        `${links.handwritingFonts}/${HOSTED_HANDWRITING_FONTS[family]}`
+  }
+  await Promise.all([
+    loadFonts(bundled),
+    Object.keys(hosted).length > 0 ? Font.loadAsync(hosted) : undefined,
+  ])
 }
 
 type FontPair = { regular: string; bold: string }
@@ -56,19 +67,15 @@ function targetFontsFor(locale: string): FontPair {
 export function useHandwritingFonts(locale: string): FontPair {
   const target = useMemo(() => targetFontsFor(locale), [locale])
 
-  const remoteToLoad = useMemo(() => {
-    const out: Record<string, string> = {}
-    for (const family of new Set([target.regular, target.bold])) {
-      if (REMOTE_FONTS[family] && !Font.isLoaded(family)) {
-        out[family] = REMOTE_FONTS[family]
-      }
-    }
-    return out
-  }, [target])
-
-  const [ready, setReady] = useState(
-    () => Object.keys(remoteToLoad).length === 0
+  const toLoad = useMemo(
+    () =>
+      [...new Set([target.regular, target.bold])].filter(
+        (family) => hasFace(family) && !Font.isLoaded(family)
+      ),
+    [target]
   )
+
+  const [ready, setReady] = useState(() => toLoad.length === 0)
   const [bundledReady, setBundledReady] = useState(bundledLoaded)
 
   useEffect(() => {
@@ -83,18 +90,18 @@ export function useHandwritingFonts(locale: string): FontPair {
   }, [bundledReady])
 
   useEffect(() => {
-    if (Object.keys(remoteToLoad).length === 0) {
+    if (toLoad.length === 0) {
       setReady(true)
       return
     }
     let cancelled = false
-    Font.loadAsync(remoteToLoad)
+    loadFaces(toLoad)
       .then(() => !cancelled && setReady(true))
       .catch(() => {})
     return () => {
       cancelled = true
     }
-  }, [remoteToLoad])
+  }, [toLoad])
 
   if (ready && target.regular !== FALLBACK) return target
 

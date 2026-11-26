@@ -51,6 +51,8 @@ export function headersFile(): string {
 
     '/assets/*': ['Cache-Control: public, max-age=31536000, immutable'],
 
+    '/fonts/*': ['Cache-Control: public, max-age=31536000, immutable'],
+
     [`${HELP_IMAGES_BASE}/*`]: [
       'Access-Control-Allow-Origin: *',
       'Cache-Control: public, max-age=31536000, immutable',

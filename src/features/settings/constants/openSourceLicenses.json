@@ -469,6 +469,12 @@
     "license": "MIT"
   },
   {
+    "name": "@expo-google-fonts/aref-ruqaa",
+    "version": "0.4.1",
+    "license": "MIT AND OFL-1.1",
+    "author": "Expo Team"
+  },
+  {
     "name": "@expo-google-fonts/inter",
     "version": "0.2.3",
     "license": "MIT",

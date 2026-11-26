@@ -1,6 +1,6 @@
-import { Platform } from 'react-native'
 import { mmkvStorage } from '@/stores/mmkv'
 import { isHttpUrl } from '@/lib/linkDetection'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 export {
   findLinks,
@@ -301,7 +301,8 @@ async function requestPreview(url: string): Promise<PreviewResult> {
 const inFlight = new Map<string, Promise<LinkPreview | null>>()
 
 export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
-  if (Platform.OS === 'web' || !isHttpUrl(url)) return Promise.resolve(null)
+  if (!hasCapability('linkPreviews') || !isHttpUrl(url))
+    return Promise.resolve(null)
 
   const cached = getCachedLinkPreview(url)
   if (cached) return Promise.resolve(cached.preview)

@@ -18,9 +18,10 @@ const sections = [
         of each upload, but never what's inside. Cloud Sync stores photos as
         your device saved them, up to 200 MB per account or 5 GB for Supporters,
         and the server cannot tell which contact or note a photo belongs to.
-        Optional iCloud and Google Drive sync are not encrypted end to end by
-        WitnessWork. If you turn on calendar sync, your plans and follow-ups go
-        to your device's calendar account, such as iCloud or Google.
+        Optional iCloud and Google Drive sync are encrypted end to end too, once
+        all your devices that use it run a current version of WitnessWork. If
+        you turn on calendar sync, your plans and follow-ups go to your device's
+        calendar account, such as iCloud or Google.
       </p>
     ),
   },

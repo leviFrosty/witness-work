@@ -18,8 +18,9 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS registration (
 type Bucket = { hour: number; n: number }
 
 /**
- * One SQLite Durable Object per caller (a hash of its caller key: the client
- * IP, IPv6 by /64, or a bearer request's hashed account; `limits.ts`):
+ * One SQLite Durable Object per caller (a keyed HMAC of its caller key,
+ * `callerQuotaName`: the client IP, IPv6 by /64, or a bearer request's hashed
+ * account; `limits.ts`):
  * how many validly signed `inbox/register` calls it made in each hour of the
  * last day, and nothing else. Single-threaded, so the check and the count
  * can't race. It deletes itself once its newest hour leaves the window.

@@ -760,7 +760,7 @@ At `low` the model sometimes left out the second of two actions in one message. 
 | `scribe:legacy-notes-import`            | `on` (or `true`) re-allows the old `/notes-import/*` routes                                   | **off** (426)           |
 | `scribe:dev-session`                    | `{"limits":"real","plan":"supporter"}`, either field; read for dev sessions only              | unlimited, `free`       |
 
-A failed KV read counts as absent: Scribe AI stays on with the defaults, and the legacy routes let the request through.
+A failed KV read counts as absent: Scribe AI stays on with the defaults. The legacy switch is the exception: a failed read counts as off (426), so the old routes never come back because KV is down.
 
 ### Configuration
 
@@ -802,7 +802,7 @@ The dev bypass lifts **usage limits only**. A `dev` session (opened with the dev
 - With `scribe:legacy-notes-import` off (the default), every `/notes-import/*` route **except `GET /notes-import/status`** answers 426 `{ ok: false, error: "Update required", code: "upgrade_required" }` with no `Retry-After`, before auth, kill switch, or rate limit. That includes kickoff, the synchronous `POST /notes-import`, transcribe, challenge/attest/verify, and every run route. App versions from sessions on map 426 to Update Required, which their session client shows over the whole app.
 - `GET /notes-import/usage` answers 404 `not_found` instead, as a server from before the route did. Older composers read it each time they open; a 426 there would put the whole app behind Update Required as soon as the User opened Notes Import. With the 404 the composer keeps what it shows, including its own update message once `notes-import:min-version` is set, and the rest of the app stays usable.
 - `GET /notes-import/status` keeps answering unchanged: older app versions read App Attest and Play Integrity capabilities from it to open account sessions. At cutover, set KV `notes-import:min-version` to the first Scribe AI app version so older composers show their own update message instead of a failed import.
-- `on` runs the old handlers unchanged (an escape hatch while the Scribe AI rollout is watched), and so does a failed KV read, so a KV hiccup never sends every older app to Update Required. `POST /admin/notes-import/reset` answers only while the routes are on (404 otherwise). The Notes Import code stays in ww-api, unreachable while off, until the switch is retired in a follow-up.
+- `on` runs the old handlers unchanged (an escape hatch while the Scribe AI rollout is watched). A failed KV read counts as off, as `auth:legacy`'s does, so older apps see Update Required until the next read succeeds. `POST /admin/notes-import/reset` answers only while the routes are on (404 otherwise). The Notes Import code stays in ww-api, unreachable while off, until the switch is retired in a follow-up.
 - No Import Credit, window, or hash record carries over. Notes Import's index DO data is left to expire.
 - The switch must be `on` before a ww-api deploy with Scribe AI reaches an environment whose apps don't have Scribe AI yet. The cutover itself (store release, `notes-import:min-version`, then the switch off, then a week of watching) is a runbook in `services/api/AGENTS.md` → Scribe AI → Release and cutover.
 

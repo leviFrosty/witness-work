@@ -178,6 +178,7 @@ test('each environment deploys its own Worker to its own host', () => {
     assert.equal(config.preview_urls, false)
     assert.equal(config.vars.WW_WEB_PROFILE, target)
     assert.equal(config.assets.not_found_handling, 'single-page-application')
+    assert.equal(config.observability?.logs?.invocation_logs, false)
 
     for (const pattern of [
       '/_expo/*',

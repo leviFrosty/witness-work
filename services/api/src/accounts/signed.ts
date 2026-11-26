@@ -232,7 +232,11 @@ export const refuseAtEdge = async (
       })
 }
 
-/** A hashed Durable Object name for a rolling-day quota, under `label`. */
+/**
+ * A hashed Durable Object name for a rolling-day quota, under `label`, for a
+ * key nobody can enumerate (an account id or key). An IP-derived key uses
+ * `callerQuotaName` instead.
+ */
 export const quotaName = async (label: string, key: string): Promise<string> =>
   bytesToBase64Url(
     await sha256Bytes(new TextEncoder().encode(`ww-account/v1/${label}\n${key}`))
@@ -240,12 +244,13 @@ export const quotaName = async (label: string, key: string): Promise<string> =>
 
 /**
  * Counts one call against a rolling-day quota (a `BuddyRegistrationQuota`
- * object under `name`). Null admits; a quota outage admits too. `logHit`
+ * object under `name`). Null admits; a quota outage admits too, and so does a
+ * name that can't be made (`callerQuotaName` without its secret). `logHit`
  * logs a refusal.
  */
 export const refuseOverDailyQuota = async (
   env: Environment,
-  name: string,
+  name: string | Promise<string>,
   limit: number | undefined,
   op: string,
   limitName: string,
@@ -254,7 +259,7 @@ export const refuseOverDailyQuota = async (
   try {
     const quota = env.BUDDY_REGISTRATION_QUOTA
     const admission = await quota
-      .get(quota.idFromName(name))
+      .get(quota.idFromName(await name))
       .admit(Date.now(), limit)
     if (admission.ok) return null
     logHit(op, limitName)

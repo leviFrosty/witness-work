@@ -17,8 +17,9 @@ import { SCRIBE_KV, parseLegacyNotesImport, readKv } from './config'
  * a 404 leaves the composer showing its own update message
  * (`notes-import:min-version`), and the rest of the app usable.
  *
- * A failed KV read lets the request through (the old handlers still work),
- * so a KV hiccup never sends every older app to Update Required.
+ * A failed KV read counts as off (426), like `auth:legacy`: the old routes
+ * never come back because KV is down. Older apps show Update Required until
+ * the next read succeeds.
  */
 
 export const LEGACY_STATUS_PATH = '/notes-import/status'
@@ -26,7 +27,8 @@ export const LEGACY_USAGE_PATH = '/notes-import/usage'
 
 export const isLegacyNotesImportAllowed = async (env: Environment): Promise<boolean> => {
   const read = await readKv(env.NOTES_KV, SCRIBE_KV.legacyNotesImport)
-  return read.failed || parseLegacyNotesImport(read.value)
+  if (read.failed) console.warn('scribe: legacy Notes Import KV read failed; off')
+  return !read.failed && parseLegacyNotesImport(read.value)
 }
 
 export const upgradeRequiredResponse = (): Response =>

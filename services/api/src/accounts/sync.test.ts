@@ -1083,7 +1083,7 @@ describe('browser live socket', () => {
     expect(headers.authorization).toBeUndefined()
     expect(JSON.stringify(headers)).not.toContain(minted)
     // Who the socket is for goes to the DO in a call (`admitLive`), never
-    // in a header: Workers Logs record the forwarded request's headers. The
+    // in a header: `wrangler tail` shows the forwarded request's headers. The
     // upgrade carries only the one-use id that call answered with.
     expect(headers['x-ww-sync-admission']).toMatch(/^[0-9a-f-]{36}$/)
     for (const id of [s.accountId, s.sessionId, phone])

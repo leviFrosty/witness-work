@@ -102,6 +102,7 @@ test('the wrangler config serves files only, on the frame hosts', () => {
     assert.deepEqual(config.routes, [{ pattern: host, custom_domain: true }])
     assert.equal(config.workers_dev, false)
     assert.equal(config.preview_urls, false)
+    assert.equal(config.observability?.logs?.invocation_logs, false)
   }
 })
 

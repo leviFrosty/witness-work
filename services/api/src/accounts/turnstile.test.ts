@@ -105,13 +105,13 @@ describe('the QA bypass', () => {
     return fetch
   }
   const verify = (env: TurnstileEnv, token: string) =>
-    verifyTurnstile(env, { token, action: 'web-signup', remoteip: null })
+    verifyTurnstile(env, { token, action: 'web-signup' })
 
   it('passes the token without asking Siteverify where the switch is on', async () => {
     const fetch = siteverify()
     vi.spyOn(console, 'info').mockImplementation(() => {})
     expect(await verify(beta(), QA)).toEqual({ ok: true })
-    expect(await verifyTurnstile(beta(), { token: QA, action: 'web-recovery', remoteip: null })).toEqual({ ok: true })
+    expect(await verifyTurnstile(beta(), { token: QA, action: 'web-recovery' })).toEqual({ ok: true })
     expect(fetch).not.toHaveBeenCalled()
   })
 

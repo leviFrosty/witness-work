@@ -206,6 +206,10 @@ function contactLinkLocale(context: AppContext): ContactLinkLocale {
   )
   context.header('Content-Language', locale)
   context.header('Vary', 'Accept-Language', { append: true })
+  // `no-transform` keeps Cloudflare from rewriting the page, which includes
+  // injecting the zone's Web Analytics beacon: it reports the page URL, and a
+  // legacy `/c/<payload>` URL is a whole contact. Nothing caches these pages.
+  context.header('Cache-Control', 'no-store, no-transform')
   return locale
 }
 

@@ -29,7 +29,7 @@ async function pruneAccountSessions(environment: Environment): Promise<void> {
     await pruneActivity(db);
   } catch (error) {
     console.error("accounts: pruning activity failed");
-    Sentry.captureException(error);
+    captureFailure(error, "activity prune");
   }
   try {
     await pruneSupporterRecords(db);

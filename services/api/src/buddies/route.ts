@@ -83,6 +83,7 @@ import {
   upgradeRequiredResponse,
 } from '../accounts/legacySwitch'
 import { recordActivity } from '../accounts/activity'
+import { callerQuotaName } from '../accounts/rateCounter'
 import { isBuddiesEnabled, isBuddiesPhotosEnabled } from './killSwitch'
 import { buddiesErrorResponse, buddiesInternalError } from './errorResponse'
 import {
@@ -560,13 +561,6 @@ const isOwnerOp = (op: BuddiesOp): op is BuddiesOwnerOp =>
 const isStale = (ts: number, now: number): boolean =>
   Math.abs(now - ts) > BUDDIES_LIMITS.timestampSkewMs
 
-const registrationQuotaName = async (callerKey: string): Promise<string> =>
-  bytesToBase64Url(
-    await sha256Bytes(
-      new TextEncoder().encode(`ww-buddies/v1/register-caller\n${callerKey}`)
-    )
-  )
-
 /**
  * Gates `inbox/register` before the inbox DO: the self-signature (checkable
  * without the inbox, so junk never wakes a DO or spends quota), then the
@@ -587,7 +581,8 @@ const admitRegistration = async (
   if (!valid) return { ok: false, error: 'bad_signature' }
   let admission
   try {
-    const name = await registrationQuotaName(callerKey)
+    // A name that can't be made (no secret) admits, like an outage.
+    const name = await callerQuotaName(env, 'buddies/register-caller', callerKey)
     const quota = env.BUDDY_REGISTRATION_QUOTA
     admission = await quota.get(quota.idFromName(name)).admit(Date.now())
   } catch (error) {

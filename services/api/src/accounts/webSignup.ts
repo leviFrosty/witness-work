@@ -243,7 +243,6 @@ const refuseTurnstile = async (
   const outcome = await verifyTurnstile(c.env, {
     token,
     action,
-    remoteip: c.req.header('CF-Connecting-IP') ?? null,
   })
   if (outcome.ok) return null
   if ('unavailable' in outcome) {

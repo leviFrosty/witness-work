@@ -12,7 +12,7 @@ import { allowedWebOrigin } from './cors'
  * Sec-WebSocket-Protocol: ww.v1, ticket.<ticket>
  * ```
  *
- * Never the access token: Cloudflare's logs record this header in full. The
+ * Never the access token: `wrangler tail` shows this header in full. The
  * ticket names the socket kind and its id (the slot or the inbox) sealed, so
  * no id goes in the URL or reads in the offer. Every entry is an RFC 9110
  * token. The Worker checks `Origin` (an exact match in `WEB_APP_ORIGINS`,

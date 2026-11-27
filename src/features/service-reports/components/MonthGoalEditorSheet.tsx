@@ -52,7 +52,7 @@ const MonthGoalEditorSheet = ({
 }: MonthGoalEditorSheetProps) => {
   const theme = useTheme()
   const inputRef = useRef<RNTextInput>(null)
-  const [draftGoal, setDraftGoal] = useState(
+  const [draftGoal, setDraftGoal] = useState(() =>
     formatPlainNumber(effectiveGoalHours)
   )
   const [showValidationError, setShowValidationError] = useState(false)

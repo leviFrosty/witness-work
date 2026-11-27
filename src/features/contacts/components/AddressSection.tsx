@@ -138,8 +138,10 @@ export default function AddressSection({
   const stackModes = useAccessibilityTextSize()
 
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
-  const [query, setQuery] = useState(addressToString(contact.address))
-  const [isResult, setIsResult] = useState(hasAddressContent(contact.address))
+  const [query, setQuery] = useState(() => addressToString(contact.address))
+  const [isResult, setIsResult] = useState(() =>
+    hasAddressContent(contact.address)
+  )
   const [mode, setMode] = useState<Mode>(
     dataProtectionMode || initialManual ? 'manual' : 'search'
   )

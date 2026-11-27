@@ -133,12 +133,16 @@ export default function TerritoryShareScreen({ route, navigation }: Props) {
   )
   const shareWithBuddies = async () => {
     setSending(true)
-    const shared = await sharing.actions.share(
-      territoryId,
-      pickedBuddies.map((buddy) => buddy.inboxId),
-      streetIds
-    )
-    setSending(false)
+    let shared = false
+    try {
+      shared = await sharing.actions.share(
+        territoryId,
+        pickedBuddies.map((buddy) => buddy.inboxId),
+        streetIds
+      )
+    } finally {
+      setSending(false)
+    }
     if (!shared) return
     toast.success(
       i18n.t('territories.share.shared_toast', {
@@ -158,15 +162,19 @@ export default function TerritoryShareScreen({ route, navigation }: Props) {
       return
     }
     setStarting(true)
-    await nextFrame()
-    const created = await sharing.actions.createLink(
-      territoryId,
-      streetIds,
-      guestLinkLifetimeMs(
-        guestLinkDays(usePreferences.getState().territoryGuestLinkDays)
+    let created: Awaited<ReturnType<typeof sharing.actions.createLink>> = null
+    try {
+      await nextFrame()
+      created = await sharing.actions.createLink(
+        territoryId,
+        streetIds,
+        guestLinkLifetimeMs(
+          guestLinkDays(usePreferences.getState().territoryGuestLinkDays)
+        )
       )
-    )
-    setStarting(false)
+    } finally {
+      setStarting(false)
+    }
     if (!created || !navigation.isFocused()) return
     navigation.replace('TerritoryShareLink', {
       territoryId,

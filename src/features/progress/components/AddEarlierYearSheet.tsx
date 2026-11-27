@@ -35,12 +35,19 @@ const AddEarlierYearSheet = ({
 
   const initialValue = availableEndYears[0]
   const [draftValue, setDraftValue] = useState<number | undefined>(initialValue)
-  const draftRef = useRef(draftValue)
-  draftRef.current = draftValue
+  const draftRef = useRef(initialValue)
 
   useEffect(() => {
-    if (open) setDraftValue(availableEndYears[0])
+    if (open) {
+      draftRef.current = availableEndYears[0]
+      setDraftValue(availableEndYears[0])
+    }
   }, [open, availableEndYears])
+
+  const handleDraftChange = (next: number) => {
+    draftRef.current = next
+    setDraftValue(next)
+  }
 
   const handleConfirm = () => {
     if (draftRef.current !== undefined) onConfirm(draftRef.current)
@@ -90,7 +97,7 @@ const AddEarlierYearSheet = ({
             value: endYear,
           }))}
           value={draftValue}
-          onValueChange={setDraftValue}
+          onValueChange={handleDraftChange}
           accessibilityLabel={i18n.t('serviceYear')}
         />
       ) : null}

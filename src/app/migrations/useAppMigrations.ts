@@ -16,7 +16,9 @@ import { migrateLegacyLocale } from '@/features/settings/lib/migrateLegacyLocale
 import { whenIdle } from '@/lib/whenIdle'
 
 export function useAppMigrations() {
-  const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
+  const [hasMigrated, setHasMigrated] = useState(() =>
+    hasMigratedFromAsyncStorage()
+  )
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {

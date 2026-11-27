@@ -85,7 +85,6 @@ export function useScribeVoiceCapture(
   const quietRef = useRef(false)
   const holdLevelsUntil = useRef(0)
   const onFinished = useRef(options.onFinished)
-  onFinished.current = options.onFinished
 
   const generation = useRef(0)
 
@@ -107,7 +106,7 @@ export function useScribeVoiceCapture(
     generation.current++
     subscriptions.current.forEach((subscription) => subscription.remove())
     subscriptions.current = []
-    level.value = 0
+    level.set(0)
     range.current = initialVoiceLevelRange()
     heardSpeech.current = false
     startedAt.current = null
@@ -152,7 +151,7 @@ export function useScribeVoiceCapture(
     if (Date.now() < holdLevelsUntil.current) return
     const next = normalizeVoiceLevel(range.current, raw)
     range.current = { floor: next.floor, peak: next.peak }
-    level.value = next.loudness
+    level.set(next.loudness)
     const now = Date.now()
     if (next.loudness >= VOICE_SPEECH_LOUDNESS) {
       heardSpeech.current = true
@@ -308,9 +307,13 @@ export function useScribeVoiceCapture(
   }
 
   const stopRef = useRef(stopWith)
-  stopRef.current = stopWith
   const discardRef = useRef(discard)
-  discardRef.current = discard
+
+  useEffect(() => {
+    onFinished.current = options.onFinished
+    stopRef.current = stopWith
+    discardRef.current = discard
+  })
 
   useEffect(() => {
     if (state !== 'listening') return

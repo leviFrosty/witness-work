@@ -1,4 +1,4 @@
-import { type ReactNode, type Ref, useId, useState } from 'react'
+import { type ReactNode, type Ref, useId, useRef, useState } from 'react'
 import { ScrollView, type StyleProp, View, type ViewStyle } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 
@@ -25,13 +25,21 @@ export default function PeekScrollView({
   onContentSizeChange,
   testID,
 }: Props) {
-  const [viewport, setViewport] = useState(0)
-  const [content, setContent] = useState(0)
-  const [offset, setOffset] = useState(0)
+  const metrics = useRef({ viewport: 0, content: 0, offset: 0 })
+  const [fades, setFades] = useState({ above: false, below: false })
+
+  const syncFades = () => {
+    const { viewport, content, offset } = metrics.current
+    const above = offset > 1
+    const below = offset < content - viewport - 1
+    setFades((prev) =>
+      prev.above === above && prev.below === below ? prev : { above, below }
+    )
+  }
 
   const scrolls = height !== undefined
-  const moreAbove = scrolls && offset > 1
-  const moreBelow = scrolls && offset < content - viewport - 1
+  const moreAbove = scrolls && fades.above
+  const moreBelow = scrolls && fades.below
 
   return (
     <View style={{ height, overflow: 'hidden' }}>
@@ -43,12 +51,19 @@ export default function PeekScrollView({
         bounces={false}
         overScrollMode='never'
         scrollEventThrottle={16}
-        onLayout={(e) => setViewport(e.nativeEvent.layout.height)}
+        onLayout={(e) => {
+          metrics.current.viewport = e.nativeEvent.layout.height
+          syncFades()
+        }}
         onContentSizeChange={(w, h) => {
-          setContent(h)
+          metrics.current.content = h
+          syncFades()
           onContentSizeChange?.(w, h)
         }}
-        onScroll={(e) => setOffset(e.nativeEvent.contentOffset.y)}
+        onScroll={(e) => {
+          metrics.current.offset = e.nativeEvent.contentOffset.y
+          syncFades()
+        }}
         contentContainerStyle={contentContainerStyle}
       >
         {children}

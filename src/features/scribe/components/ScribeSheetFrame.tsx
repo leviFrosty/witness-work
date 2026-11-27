@@ -5,13 +5,13 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   FadeIn,
   interpolate,
-  runOnJS,
   SlideInDown,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { withAlpha } from '@/lib/color'
@@ -73,7 +73,7 @@ const ScribeSheetFrame = ({
   const minimize = () => {
     if (!onMinimizeRequest) return
     drag.value = withTiming(away, { duration: SLIDE_OUT_MS }, (finished) => {
-      if (finished) runOnJS(onMinimizeRequest)()
+      if (finished) scheduleOnRN(onMinimizeRequest)
     })
   }
   const dismiss = (via: ScribeSheetDismissal) =>
@@ -88,11 +88,11 @@ const ScribeSheetFrame = ({
       const pulled =
         e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY
       if (pulled && onMinimizeRequest) {
-        runOnJS(minimize)()
+        scheduleOnRN(minimize)
         return
       }
       drag.value = withSpring(0, { damping: 20, stiffness: 220 })
-      if (pulled) runOnJS(onDismissRequest)('swipe')
+      if (pulled) scheduleOnRN(onDismissRequest, 'swipe')
     })
 
   const sheetStyle = useAnimatedStyle(() => ({

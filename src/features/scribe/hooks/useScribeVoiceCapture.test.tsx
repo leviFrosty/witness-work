@@ -18,7 +18,15 @@ vi.mock('react-native', () => ({
   Linking: { openSettings: vi.fn() },
 }))
 vi.mock('react-native-reanimated', () => ({
-  useSharedValue: (value: number) => ({ value }),
+  useSharedValue: (value: number) => {
+    const shared = {
+      value,
+      set: (next: number) => {
+        shared.value = next
+      },
+    }
+    return shared
+  },
 }))
 vi.mock('../../../../modules/speech-transcription', () => ({
   isSupported: () => true,

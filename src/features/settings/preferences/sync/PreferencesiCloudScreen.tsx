@@ -252,8 +252,11 @@ const PreferencesiCloudScreenInner = () => {
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
 
-            shouldPromptForImages =
-              !usesCloudSync() && payloadReferencesPhotos(pendingRemote)
+            if (!usesCloudSync() && payloadReferencesPhotos(pendingRemote)) {
+              if (usePreferences.getState().iCloudSyncIncludeImages)
+                void iCloudSync.pullImagesIfEnabled()
+              else shouldPromptForImages = true
+            }
             toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           }
           break

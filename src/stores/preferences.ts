@@ -521,7 +521,7 @@ export const PREFERENCE_DEFAULTS = {
 
   iCloudSyncSetByUser: false,
 
-  iCloudSyncIncludeImages: false,
+  iCloudSyncIncludeImages: true,
 
   syncProvider: null as 'cloud' | 'platform' | null,
 

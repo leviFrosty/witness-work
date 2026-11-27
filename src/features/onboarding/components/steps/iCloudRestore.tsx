@@ -371,7 +371,10 @@ const ICloudRestore = ({ goBack, goNext, provider = 'platform' }: Props) => {
       })
 
     const referencesPhotos = payloadReferencesPhotos(remote)
-    if (referencesPhotos && usesCloudSync()) {
+    if (
+      referencesPhotos &&
+      (usesCloudSync() || usePreferences.getState().iCloudSyncIncludeImages)
+    ) {
       void iCloudSync.pullImagesIfEnabled()
     } else if (referencesPhotos) {
       analytics.capture('icloud_restore_images_prompted', {

@@ -988,7 +988,7 @@ const launchedDevice = async (...args: Parameters<typeof device>) => {
 describe('Photos over Cloud Sync', () => {
   it('carries contact, profile and note photos both ways, without “Include photos”', async () => {
     const iphone = await device('iphone', { os: 'ios' })
-    expect(iphone.usePreferences.getState().iCloudSyncIncludeImages).toBe(false)
+    iphone.usePreferences.setState({ iCloudSyncIncludeImages: false })
     expect(iphone.iCloudSync.photosTravel()).toBe(true)
     iphone.files.set(picked('c1', 'r1'), new Uint8Array([1, 1, 1]))
     iphone.files.set(notePath('photo-0001'), new Uint8Array([2, 2]))
@@ -1438,6 +1438,7 @@ describe('Photos over Cloud Sync', () => {
 
   it('keeps Google Drive behind “Include photos”, unchanged', async () => {
     const phone = await device('phone', { option: 'platform' })
+    phone.usePreferences.setState({ iCloudSyncIncludeImages: false })
     phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
     phone.useContacts.setState({
       contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,

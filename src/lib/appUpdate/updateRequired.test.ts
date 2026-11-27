@@ -106,6 +106,21 @@ describe('the app config check', () => {
 })
 
 describe('fetchAppConfig', () => {
+  it('reads whether iCloud and Google Drive folders may start sealing', async () => {
+    const read = (body: unknown) =>
+      fetchAppConfig(
+        'https://api.example/app/v1/config',
+        answer(body) as unknown as typeof fetch
+      )
+    await expect(
+      read({ ok: true, platformSync: { sealing: true } })
+    ).resolves.toMatchObject({ platformSealing: true })
+    await expect(
+      read({ ok: true, platformSync: { sealing: false } })
+    ).resolves.toMatchObject({ platformSealing: false })
+    expect(await read({ ok: true })).not.toHaveProperty('platformSealing')
+  })
+
   const answer = (body: unknown, status = 200) =>
     vi.fn(async () => Response.json(body, { status }))
 

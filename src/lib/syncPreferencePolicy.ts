@@ -23,6 +23,8 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'cloudSyncConfig',
   'cloudSyncEntitled',
   'cloudSyncChanges',
+  'platformSyncSealing',
+  'platformSyncSealedFor',
   'cloudSyncPhotos',
   'cloudSyncRequestAnswered',
   'iCloudSyncIncludeImages',

@@ -15,6 +15,8 @@ export type SyncRead = {
 
 export type SyncReadOptions = {
   listOnly?: (filename: string) => boolean
+
+  fresh?: boolean
 }
 
 export type SyncWriteOptions = {
@@ -132,6 +134,8 @@ export interface SyncTransport {
   listBinaryFiles(): Promise<BinaryFileInfo[]>
   deleteBinaryFile(filename: string): Promise<void>
   deleteAllBinaries(): Promise<void>
+
+  migratePhotos?(shouldStop: () => boolean): Promise<void>
 
   addRemoteChangeListener(
     listener: (event: { modifiedAt: number }) => void

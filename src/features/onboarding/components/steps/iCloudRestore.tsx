@@ -55,7 +55,7 @@ type Probe =
   | { state: 'unavailable' }
   | { state: 'needsConnect' }
   | { state: 'noBackup' }
-  | { state: 'incomplete' }
+  | { state: 'incomplete'; otherAccount: boolean }
   | { state: 'offline' }
   | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
 
@@ -75,7 +75,10 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
     case 'none':
       return { state: 'noBackup' }
     case 'incomplete':
-      return { state: 'incomplete' }
+      return {
+        state: 'incomplete',
+        otherAccount: peek.reason === 'other-account',
+      }
     case 'offline':
       return { state: 'offline' }
     case 'unavailable':
@@ -624,7 +627,13 @@ const ICloudRestore = ({ goBack, goNext, provider = 'platform' }: Props) => {
                 lineHeight: 18,
               }}
             >
-              {i18n.t(syncKey('iCloudRemoteNotReady_description'))}
+              {i18n.t(
+                syncKey(
+                  probe.otherAccount
+                    ? 'iCloudRestoreOtherAccount'
+                    : 'iCloudRemoteNotReady_description'
+                )
+              )}
             </Text>
           </Card>
         )}

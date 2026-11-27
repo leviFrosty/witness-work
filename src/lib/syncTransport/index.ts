@@ -1,12 +1,16 @@
 import { Platform } from 'react-native'
 import { iCloudTransport } from '@/lib/syncTransport/iCloudTransport'
-import { registeredAndroidTransport } from '@/lib/syncTransport/registry'
+import {
+  registeredAndroidTransport,
+  sealedPlatformTransport,
+} from '@/lib/syncTransport/registry'
 import type { SyncTransport } from '@/lib/syncTransport/types'
 
 export * from '@/lib/syncTransport/types'
 export { hasSyncTransport } from '@/lib/syncTransport/platform'
 export {
   registerAndroidSyncTransport,
+  registerPlatformSealer,
   usesGoogleDriveSync,
 } from '@/lib/syncTransport/registry'
 
@@ -40,9 +44,16 @@ const unavailableTransport: SyncTransport = {
   addAvailabilityChangeListener: () => noSubscription,
 }
 
-export function syncTransport(): SyncTransport {
+function platformTransport(): SyncTransport {
   if (Platform.OS === 'ios') return iCloudTransport
   if (Platform.OS === 'android')
     return registeredAndroidTransport() ?? unavailableTransport
   return unavailableTransport
+}
+
+export function syncTransport(): SyncTransport {
+  const transport = platformTransport()
+  return transport === unavailableTransport
+    ? transport
+    : sealedPlatformTransport(transport)
 }

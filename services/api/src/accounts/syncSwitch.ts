@@ -7,22 +7,29 @@ import type { SessionCapability } from './contracts'
  *
  * - `sync:enabled`: `"true"` or `"on"` turns Cloud Sync on, anything else off;
  *   absent (or unreadable), the `SYNC_ENABLED` var decides the same way.
- * - `sync:entitlement`: `"supporter"` makes it a Supporter benefit again
- *   (the lever back, in any case); `"everyone"` (and anything else) keeps it free, as
- *   witness-work ADR 0040 decided. Absent (or unreadable), the
+ * - `sync:entitlement`: `"supporter"` makes it a Supporter benefit again (the
+ *   lever back, in any case); `"everyone"` (and anything else) keeps it free,
+ *   as witness-work ADR 0040 decided. Absent (or unreadable), the
  *   `SYNC_ENTITLEMENT` var decides the same way, else `everyone`.
- * - `sync:photos`: `"off"` (or `"false"`) refuses photo puts
- *   (`photos_disabled`); anything else keeps them on. Absent (or
- *   unreadable), the `SYNC_PHOTOS` var decides the same way, else on.
- * - `sync:changes`: `"true"` or `"on"` turns record changes on (witness-work
- *   ADR 0060), anything else off (`changes_disabled`). Absent (or
- *   unreadable), the `SYNC_CHANGES` var decides the same way, else off.
+ * - `sync:photos`: `"off"` (or `"false"`) refuses photo puts (`photos_disabled`);
+ *   anything else keeps them on. Absent (or unreadable), the `SYNC_PHOTOS` var
+ *   decides the same way, else on.
+ * - `sync:changes`: `"true"` or `"on"` turns record changes on (witness-work ADR
+ *   0060), anything else off (`changes_disabled`). Absent (or unreadable), the
+ *   `SYNC_CHANGES` var decides the same way, else off.
  */
 
 export const SYNC_ENABLED_KEY = 'sync:enabled'
 export const SYNC_ENTITLEMENT_KEY = 'sync:entitlement'
 export const SYNC_PHOTOS_KEY = 'sync:photos'
 export const SYNC_CHANGES_KEY = 'sync:changes'
+/**
+ * `sync:platform-sealing`: `"off"` (or `"false"`) pauses new iCloud and Google
+ * Drive folders from switching to sealed files (witness-work ADR 0067 §6);
+ * anything else, absent, or unreadable leaves it on. Folders already sealed
+ * stay sealed either way.
+ */
+export const SYNC_PLATFORM_SEALING_KEY = 'sync:platform-sealing'
 const OFF = new Set(['off', 'false'])
 const CACHE_TTL_SECONDS = 60
 const ON = new Set(['true', 'on'])
@@ -67,10 +74,24 @@ export const isSyncPhotosOn = async (env: SyncSwitchEnv): Promise<boolean> => {
   return !OFF.has((value ?? env.SYNC_PHOTOS ?? '').trim().toLowerCase())
 }
 
-/** Whether record changes are on (`sync:changes`, then `SYNC_CHANGES`, else off). */
+/**
+ * Whether record changes are on (`sync:changes`, then `SYNC_CHANGES`, else
+ * off).
+ */
 export const isSyncChangesOn = async (env: SyncSwitchEnv): Promise<boolean> => {
   const value = await read(env, SYNC_CHANGES_KEY)
   return ON.has((value ?? env.SYNC_CHANGES ?? '').trim().toLowerCase())
+}
+
+/**
+ * Whether iCloud and Google Drive folders may start sealing
+ * (`sync:platform-sealing`, else on).
+ */
+export const isPlatformSealingOn = async (
+  env: Pick<SyncSwitchEnv, 'NOTES_KV'>
+): Promise<boolean> => {
+  const value = await read(env as SyncSwitchEnv, SYNC_PLATFORM_SEALING_KEY)
+  return !OFF.has((value ?? '').trim().toLowerCase())
 }
 
 /** Both switches, as `GET /app/v1/config` and `GET /accounts/v1/sync` say them. */
@@ -88,11 +109,11 @@ export const syncSwitches = async (
 export const SYNC_EVERYONE_CAPABILITY: SessionCapability = 'sync-everyone'
 
 /**
- * The entitlement an app sees: `everyone` reaches only apps (and browsers)
- * that send the `sync-everyone` capability, which turn Cloud Sync on by
- * themselves only for a new install. Apps that never send it, at any version,
- * keep the Supporter rule: they turn it on for any device that never chose
- * (witness-work ADR 0040 §2).
+ * The entitlement an app sees: `everyone` reaches only apps (and browsers) that
+ * send the `sync-everyone` capability, which turn Cloud Sync on by themselves
+ * only for a new install. Apps that never send it, at any version, keep the
+ * Supporter rule: they turn it on for any device that never chose (witness-work
+ * ADR 0040 §2).
  */
 export const entitlementForApp = (
   entitlement: SyncEntitlement,

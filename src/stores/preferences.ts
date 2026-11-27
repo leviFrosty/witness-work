@@ -488,6 +488,7 @@ export const PREFERENCE_DEFAULTS = {
   iCloudSyncPendingPush: false,
   iCloudSyncIssue: null as
     | 'newer-version'
+    | 'other-account'
     | 'invalid-file'
     | 'read-failed'
     | 'push-failed'
@@ -542,6 +543,10 @@ export const PREFERENCE_DEFAULTS = {
   cloudSyncEntitled: null as boolean | null,
 
   cloudSyncChanges: null as boolean | null,
+
+  platformSyncSealing: false,
+
+  platformSyncSealedFor: [] as string[],
 
   cloudSyncPhotos: null as boolean | null,
 

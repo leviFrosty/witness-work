@@ -2,6 +2,7 @@ import type { AppContext, Environment } from './types'
 import { parseMinAppVersion } from './notesImport/config'
 import {
   entitlementForApp,
+  isPlatformSealingOn,
   isSyncChangesOn,
   syncSwitches,
 } from './accounts/syncSwitch'
@@ -102,6 +103,10 @@ export const requestRegion = (
  * And the caller's `country` and `regionCode` (`requestRegion`), always
  * present, null when unknown.
  *
+ * And `platformSync: { sealing }` (witness-work ADR 0067 §6): whether iCloud
+ * and Google Drive folders may switch to sealed files, from KV
+ * `sync:platform-sealing` (`off` pauses; absent is on).
+ *
  * And Buddies' caps (witness-work ADR 0046), `buddies: { maxBuddies,
  * maxOpenInvites }`: the spots the relay allows (buddies plus pending invites)
  * and the invites the app lets a User make by hand. The app enforces and shows
@@ -113,12 +118,13 @@ export const appBuddiesConfig = () => ({
 })
 
 export const handleAppConfigRequest = async (c: AppContext) => {
-  const [minAppVersion, switches, webSignupEnabled, changesOn] =
+  const [minAppVersion, switches, webSignupEnabled, changesOn, sealingOn] =
     await Promise.all([
       resolveAppMinVersion(c.env),
       syncSwitches(c.env),
       webSignupAvailable(c.env),
       isSyncChangesOn(c.env),
+      isPlatformSealingOn(c.env),
     ])
   const enabled =
     switches.enabled && c.env.ACCOUNT_SYNC != null && c.env.ACCOUNTS_DB != null
@@ -140,18 +146,30 @@ export const handleAppConfigRequest = async (c: AppContext) => {
   }
   const { country, regionCode } = requestRegion(c.req.raw)
   const buddies = appBuddiesConfig()
+  // Whether iCloud and Google Drive folders may switch to sealed files
+  // (witness-work ADR 0067 §6). Apart from `sync`, which is Cloud Sync's.
+  const platformSync = { sealing: sealingOn }
   return c.json(
     minAppVersion
       ? {
           ok: true,
           minAppVersion,
           sync,
+          platformSync,
           webSignup,
           buddies,
           country,
           regionCode,
         }
-      : { ok: true, sync, webSignup, buddies, country, regionCode },
+      : {
+          ok: true,
+          sync,
+          platformSync,
+          webSignup,
+          buddies,
+          country,
+          regionCode,
+        },
     200,
     { 'Cache-Control': 'no-store' }
   )

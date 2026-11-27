@@ -92,6 +92,8 @@ from 1.46.0 and earlier don't have it, so break those down by `$os` (`iOS`,
 | `photo_storage_viewed`                             | Once per session; reach of the Photo Storage screen, not every visit.                                                                                                                                                                                        |
 | `photo_storage_upsell_shown`                       | Once per UTC day per `source` and `status`; reach of the almost-full card, not every visit to Settings.                                                                                                                                                      |
 | `cloud_sync_photo_transfer_failed`                 | Once per UTC day, `source` and `reason`; which photo failures affect people, not how often a phone retries.                                                                                                                                                  |
+| `platform_sync_sealing_waiting`                    | Once per UTC day and `reason`; how many devices wait to seal their iCloud or Google Drive folder, and on what, not every read.                                                                                                                               |
+| `platform_sync_sealing_failed`                     | Once per UTC day and `reason` (the step); which sealing failures affect people, not how often a device retries.                                                                                                                                              |
 | `device_storage_full`                              | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                                            |
 | `update_required_shown`                            | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                                                   |
 | `help_center_search_completed`                     | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                                                    |
@@ -644,6 +646,24 @@ remove/failure remain. Device list views, generic sync notices, and
 resolution-link clicks are removed. A local manual-sync completion does not
 prove Apple's cloud replication finished. No device IDs/names, filenames,
 records, or payloads are included.
+
+### Sealing iCloud and Google Drive sync
+
+iCloud and Google Drive folders switch to end-to-end encrypted ("sealed") files
+once every recent device in them can read them (ADR 0067). `transport` is
+`icloud` or `google-drive` on each event. No names, ids or keys are sent.
+
+| Event                             | Interpretation                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `platform_sync_sealing_waiting`   | The folder is still plaintext and this device can't switch it yet. At most once a day a device for each `reason`: `switch` (the remote switch, `sync:platform-sealing`, is off or unread), `key` (this device has no account key yet), or `devices`. `update_devices`, `other_account_devices` and `no_key_devices` count the recent devices holding it: on an old build, on another WitnessWork account, or without an account key. |
+| `platform_sync_sealing_started`   | This device started switching its folder: its file is sealed and about to be read back.                                                                                                                                                                                                                                                                                                                                              |
+| `platform_sync_sealing_completed` | The switch finished: the sealed file read back and checked out, and the folder is sealed. `started` minus `completed` and `failed` shows switches cut short (the app closed).                                                                                                                                                                                                                                                        |
+| `platform_sync_sealing_failed`    | A step of the switch failed and the plaintext file stayed. At most once a day a device for each `reason`: `seal`, `write`, `verify` or `delete`. `code`: the transport's error (`network`, `storage-full`, …, else `unknown`).                                                                                                                                                                                                       |
+| `platform_sync_photos_sealed`     | A photo pass moved plaintext photos into sealed ones. `sealed` and `failed` count this pass; `remaining`: `0`, `<100` or `100+` still to move.                                                                                                                                                                                                                                                                                       |
+
+They answer how fast folders switch, how many wait on old builds or a second
+account, and whether any step fails in the field. Pause new switches with KV
+`sync:platform-sealing` `off` if `failed` rises.
 
 ### Cloud Sync
 

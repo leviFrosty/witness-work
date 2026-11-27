@@ -395,8 +395,9 @@ export function createGoogleDriveTransport(deps: {
 
     waitForInitialScan: async () => true,
 
-    async readFiles(include): Promise<SyncRead> {
+    async readFiles(include, options): Promise<SyncRead> {
       const op = begin()
+      const fresh = options?.fresh === true
       const wantedIn = (listing: Map<string, DriveFile[]>) =>
         [...listing.entries()]
           .filter(([name]) => isSyncJsonName(name) && include(name))
@@ -408,7 +409,7 @@ export function createGoogleDriveTransport(deps: {
       const read = (wanted: DriveFile[], last: boolean) =>
         inBatches(wanted, DOWNLOAD_CONCURRENCY, async (file) => {
           try {
-            let json = contents.get(file.id)
+            let json = fresh ? undefined : contents.get(file.id)
             if (json === undefined) {
               json = await op.api.downloadText(file.id)
               contents.set(file.id, json)
@@ -433,7 +434,7 @@ export function createGoogleDriveTransport(deps: {
             announced.delete(file.name)
           }
         })
-      await read(wantedIn(await list(op)), false)
+      await read(wantedIn(await list(op, { fresh })), false)
       if (replaced.length) {
         const names = new Set(replaced)
         await read(

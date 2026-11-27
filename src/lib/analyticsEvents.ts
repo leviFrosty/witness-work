@@ -297,6 +297,11 @@ export const analyticsEventNames = [
   'cloud_sync_switch_failed',
   'cloud_sync_tray_offer_answered',
   'cloud_sync_tray_offer_shown',
+  'platform_sync_sealing_waiting',
+  'platform_sync_sealing_started',
+  'platform_sync_sealing_completed',
+  'platform_sync_sealing_failed',
+  'platform_sync_photos_sealed',
 
   'cloud_sync_request_answered',
   'cloud_sync_web_gate_state',

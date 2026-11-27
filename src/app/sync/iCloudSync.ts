@@ -114,6 +114,7 @@ import {
 import { classifyUploadStatus, UploadVerdict } from '@/app/sync/uploadStatus'
 import { contentHash } from '@/lib/contentHash'
 import { isAccountFilename } from '@/lib/accountFile'
+import { isLockedPlaceholder } from '@/lib/syncTransport/sealed/sealedFiles'
 import { reclaimAccountFile } from '@/lib/account'
 import {
   IdentityCheckSource,
@@ -781,6 +782,7 @@ export type RemoteIncompleteReason =
   | 'scan'
   | 'downloading'
   | 'newer-version'
+  | 'other-account'
   | 'invalid-file'
   | 'timeout'
 
@@ -846,11 +848,18 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
           filename !== filenameForDevice(ensureDeviceId())
       )
       const payloads: SyncPayload[] = []
-      let unreadable: 'newer-version' | 'invalid-file' | null = null
+      let unreadable:
+        | 'newer-version'
+        | 'other-account'
+        | 'invalid-file'
+        | null = null
       for (const file of files) {
         const parsed = parsePayload(file.json)
         if (parsed) payloads.push(alignPayloadClock(parsed, file.modifiedAt))
-        else if (isNewerPayloadVersion(file.json)) unreadable = 'newer-version'
+        else if (isLockedPlaceholder(file.json)) {
+          if (unreadable !== 'newer-version') unreadable = 'other-account'
+        } else if (isNewerPayloadVersion(file.json))
+          unreadable = 'newer-version'
         else unreadable ??= 'invalid-file'
       }
 
@@ -1554,6 +1563,10 @@ async function gcImages(): Promise<void> {
         notePhotos: notes.deleted.length,
       })
     }
+    if (!result.stopped && !notes.stopped)
+      await syncTransport().migratePhotos?.(
+        () => gcStopRequested || deps.canTransfer?.() === false
+      )
   } catch (e) {
     logger.error(`${tag()} image gc failed`, e)
     errorTracking.captureException(e, { iCloudSync: 'image-gc' })
@@ -2179,7 +2192,12 @@ async function pullAndMergeInner(
   cancelReadRetry()
   lastOwnFileModifiedAt =
     read.files.find((file) => file.filename === ownFilename)?.modifiedAt ?? null
-  let issue: 'newer-version' | 'invalid-file' | 'read-failed' | null = null
+  let issue:
+    | 'newer-version'
+    | 'other-account'
+    | 'invalid-file'
+    | 'read-failed'
+    | null = null
   const { files, pending } = read
   lastReadFoundFiles = files.length > 0
 
@@ -2246,6 +2264,10 @@ async function pullAndMergeInner(
     if (!parsed) {
       unparsed[file.filename] = unparsedDeviceFile(file, seenAt)
       complete = false
+      if (isLockedPlaceholder(file.json)) {
+        if (issue !== 'newer-version') issue = 'other-account'
+        continue
+      }
       issue = isNewerPayloadVersion(file.json)
         ? 'newer-version'
         : (issue ?? 'invalid-file')
@@ -2442,7 +2464,11 @@ function unparsedDeviceFile(file: SyncFile, seenAt: number): SyncDeviceFile {
     deviceName: null,
     writtenAt: null,
     modifiedAt: file.modifiedAt,
-    status: isNewerPayloadVersion(file.json) ? 'newer-version' : 'unreadable',
+    status: isLockedPlaceholder(file.json)
+      ? 'other-account'
+      : isNewerPayloadVersion(file.json)
+        ? 'newer-version'
+        : 'unreadable',
     seenAt,
   }
 }
@@ -2548,7 +2574,7 @@ async function adoptResetEpoch(
   reason: string,
   payloads: SyncPayload[],
   complete: boolean,
-  issue: 'newer-version' | 'invalid-file' | 'read-failed' | null
+  issue: PreferencesState['iCloudSyncIssue']
 ): Promise<PullOutcome> {
   const remote = foldRemotePayloads(payloads)!
   const epoch = remote.resetEpoch!

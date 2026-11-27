@@ -476,40 +476,26 @@ describe('web sandbox subscriptions', () => {
 })
 
 describe('countsWebSandboxSubscriptions', () => {
-  it('is set only for the local development worker, never Beta or production', () => {
+  it('is set for the development and Beta workers, never production', () => {
     const toml = readFileSync(
       new URL('../wrangler.toml', import.meta.url),
       'utf8'
     )
     const sections = toml
       .split(/^(?=\[)/m)
-      .filter((section) => /^REVENUECAT_COUNT_WEB_SANDBOX\s*=/m.test(section))
+      .filter((section) => /^\s*REVENUECAT_COUNT_WEB_SANDBOX\s*=/m.test(section))
       .map((section) => section.split('\n')[0])
-    expect(sections).toEqual(['[env.dev.vars]'])
+    expect(sections).toEqual(['[env.beta.vars]', '[env.dev.vars]'])
   })
 
-  it('is on only on a development worker with the var set', () => {
+  it('is on only with the var set to "true"', () => {
     expect(
-      countsWebSandboxSubscriptions({
-        APP_ATTEST_ENVIRONMENT: 'development',
-        REVENUECAT_COUNT_WEB_SANDBOX: 'true',
-      })
+      countsWebSandboxSubscriptions({ REVENUECAT_COUNT_WEB_SANDBOX: 'true' })
     ).toBe(true)
-    expect(
-      countsWebSandboxSubscriptions({ APP_ATTEST_ENVIRONMENT: 'development' })
-    ).toBe(false)
-    for (const value of ['false', '1', 'TRUE'])
+    expect(countsWebSandboxSubscriptions({})).toBe(false)
+    for (const value of ['false', '1', 'TRUE', ''])
       expect(
-        countsWebSandboxSubscriptions({
-          APP_ATTEST_ENVIRONMENT: 'development',
-          REVENUECAT_COUNT_WEB_SANDBOX: value,
-        })
+        countsWebSandboxSubscriptions({ REVENUECAT_COUNT_WEB_SANDBOX: value })
       ).toBe(false)
-    expect(
-      countsWebSandboxSubscriptions({
-        APP_ATTEST_ENVIRONMENT: 'production',
-        REVENUECAT_COUNT_WEB_SANDBOX: 'true',
-      })
-    ).toBe(false)
   })
 })

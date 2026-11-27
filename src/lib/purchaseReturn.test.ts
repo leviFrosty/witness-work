@@ -207,18 +207,6 @@ describe('scrubPurchaseReturn', () => {
       )
     })
 
-    it('forwards a beta return in a beta build', () => {
-      expect(
-        scrubPurchaseReturn(
-          `${PROD}/supporter/thank-you?tier=tip&utm_content=beta`,
-          {
-            variant: 'beta',
-            origin: PROD,
-          }
-        ).forwardTo
-      ).toBe(`${BETA}/supporter/thank-you?tier=tip&forwarded=1`)
-    })
-
     it('returns a development build straight to the local web app', () => {
       expect(
         scrubPurchaseReturn(
@@ -357,12 +345,11 @@ describe('scrubPurchaseReturn', () => {
 describe('returnKeyFor', () => {
   it('needs no key on the config return host', () => {
     expect(returnKeyFor({ origin: PROD, variant: 'production' })).toBeNull()
-    expect(returnKeyFor({ origin: PROD, variant: 'beta' })).toBeNull()
+    expect(returnKeyFor({ origin: BETA, variant: 'beta' })).toBeNull()
     expect(returnKeyFor({ origin: LOCAL, variant: 'development' })).toBeNull()
   })
 
   it('names the origin a checkout must come back to', () => {
-    expect(returnKeyFor({ origin: BETA, variant: 'beta' })).toBe('beta')
     expect(returnKeyFor({ origin: BETA, variant: 'production' })).toBe('beta')
   })
 
@@ -376,13 +363,14 @@ describe('returnKeyFor', () => {
       returnKeyFor({ origin: 'https://preview.example', variant: 'beta' })
     ).toBeNull()
     expect(returnKeyFor({ origin: 'junk', variant: 'beta' })).toBeNull()
+    expect(returnKeyFor({ origin: PROD, variant: 'beta' })).toBeNull()
   })
 
   it('compares origins, not strings', () => {
     expect(
       returnKeyFor({
         origin: 'HTTPS://BETA.APP.WITNESSWORK.APP/',
-        variant: 'beta',
+        variant: 'production',
       })
     ).toBe('beta')
   })

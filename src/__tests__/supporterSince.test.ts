@@ -276,19 +276,20 @@ describe('supporterSinceDate', () => {
         activeSubscriptions: ['web_jwtime_399_1mo'],
       })
 
-    it('does not count a web sandbox subscription in production or Beta', () => {
+    it('does not count a web sandbox subscription in production', () => {
       expect(supporterSinceDate(webSandboxMonthly(), 'production')).toBeNull()
-      expect(supporterSinceDate(webSandboxMonthly(), 'beta')).toBeNull()
     })
 
     it('does not count one by default in a production build', () => {
       expect(supporterSinceDate(webSandboxMonthly())).toBeNull()
     })
 
-    it('counts a web sandbox subscription in development', () => {
-      expect(
-        supporterSinceDate(webSandboxMonthly(), 'development')?.toISOString()
-      ).toBe('2026-10-01T00:00:00.000Z')
+    it('counts a web sandbox subscription in development and Beta', () => {
+      for (const variant of ['development', 'beta'] as const) {
+        expect(
+          supporterSinceDate(webSandboxMonthly(), variant)?.toISOString()
+        ).toBe('2026-10-01T00:00:00.000Z')
+      }
     })
 
     it('counts a live web subscription everywhere', () => {

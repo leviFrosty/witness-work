@@ -42,7 +42,8 @@ script ever runs on the app's origin (ADR 0037 §5).
 ### Products, entitlements and offerings
 
 Every App Store product has a web twin in the production RevenueCat Billing
-config. The development config mirrors its own project's catalog instead (see
+config, and in the Beta sandbox config. The development config mirrors its own
+project's catalog instead (see
 [Configs and keys per environment](#configs-and-keys-per-environment)):
 
 | App Store product    | Web product              | Type                                | Offering / package           |
@@ -72,34 +73,40 @@ grace period.
 - **Prices** are USD only for now. Outside the US and Canada, RevenueCat
   Billing prices include tax, like the stores' prices.
 - **Changing the catalog.** A new store product needs its web twin, the same
-  entitlement and the same package, in the production config, and in the
-  development config for any product WitnessWork Dev's offerings sell.
+  entitlement and the same package, in the production config and the Beta
+  sandbox config, and in the development config for any product WitnessWork
+  Dev's offerings sell.
   RevenueCat Billing can't edit a price: make a new product and swap it into
   the package.
 
 ### Configs and keys per environment
 
-A Stripe sandbox needs its own RevenueCat Billing config, so there are two,
-each in the RevenueCat project its builds and worker already use:
+A Stripe sandbox needs its own RevenueCat Billing config, so there are three,
+each in the RevenueCat project its builds and worker already use (ADR 0067):
 
 | Build                   | RevenueCat project | Config                          | Stripe                        | Key        |
 | ----------------------- | ------------------ | ------------------------------- | ----------------------------- | ---------- |
 | Development (localhost) | WitnessWork Dev    | `WitnessWork Web (Dev Sandbox)` | A Stripe sandbox, test cards  | `rcb_sb_…` |
-| Beta and production     | WitnessWork        | `WitnessWork Web`               | Our Stripe account, live mode | `rcb_…`    |
+| Beta                    | WitnessWork        | `WitnessWork Web (Sandbox)`     | A Stripe sandbox, test cards  | `rcb_sb_…` |
+| Production              | WitnessWork        | `WitnessWork Web`               | Our Stripe account, live mode | `rcb_…`    |
 
 - **One project per environment.** A purchase shows on another device, and on
   ww-api, only inside its own RevenueCat project. Development phone builds
   (Test Store keys) and the local development worker use WitnessWork Dev, so
   the development web config lives there too, and a sandbox web purchase on
   localhost reaches a development phone and the local worker. Beta and
-  production phones and the Beta and production workers use WitnessWork, with
-  the production web config.
+  production phones and the Beta and production workers use WitnessWork, so
+  the Beta and production web configs live there.
 
-- **Sandbox only in development.** Only development builds carry the sandbox
-  key and links. A RevenueCat Billing sandbox subscription counts toward
-  Supporter status only in development builds and on the development worker
-  (ADR 0014). So Beta web uses the production config, like the Beta apps,
-  whose App Store and Google Play test purchases still count.
+- **Sandbox in development and Beta, live in production.**
+  `webBillingFor(variant)` (`src/lib/webBilling.ts`) names the mode. A
+  sandbox build (development, Beta) keeps only `sandbox/…` links, and a
+  RevenueCat Billing sandbox subscription counts toward its Supporter status.
+  A live build (production) keeps only live links and ignores sandbox web
+  purchases. The workers match: `REVENUECAT_COUNT_WEB_SANDBOX` is on for the
+  development and Beta workers only (ADR 0014, ADR 0067). So testers buy on
+  Beta web with Stripe test cards, as Beta phone testers buy in the stores'
+  sandboxes.
 - **Where a development build gets them.** `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY`
   and `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` come from `.env` or
   `.env.local`. When either is empty, a `local` web build reads it from
@@ -107,10 +114,12 @@ each in the RevenueCat project its builds and worker already use:
   `revenueCatWebItem` in `config/web-environments.json`), so a clean checkout
   doesn't build a paywall with no key. Without both, or when the key isn't
   `rcb_sb_…` or no link is `sandbox/…`, the build warns and goes on. Beta and
-  production use their own env files and never read that item. See
+  production use their own env files and never read that item. A Beta build
+  checks its values the same way and warns. A production build stops when its
+  key is a sandbox key or any link is a sandbox link. See
   `docs/web-hosting.md`.
-- **Each config mirrors its project's catalog.** The production config has a
-  web twin of every store product. The development config has one for each
+- **Each config mirrors its project's catalog.** The production and Beta
+  configs each have a web twin of every store product. The development config has one for each
   product WitnessWork Dev's offerings sell, which are Test Store products with
   their own prices. Every twin is attached to the same entitlement and package
   as its store product.
@@ -207,10 +216,12 @@ URL-encoded; package ids can hold spaces (`One Time`).
   it says so, as when there are no offerings.
 
 - **Where checkout returns.** Each config's links return to one host: the
-  sandbox config to `http://localhost:8081`, the production config to
-  `app.witnesswork.app`. The web beta, on another origin, adds
+  development config to `http://localhost:8081`, the Beta config to
+  `beta.app.witnesswork.app`, the production config to
+  `app.witnesswork.app`. A build on another origin than its config's host adds
   `utm_content=<return key>` to the link, and RevenueCat passes `utm_*`
-  parameters through to the redirect (see the return page).
+  parameters through to the redirect (see the return page). No build does
+  that today.
 
 - **Opening the link.** Buy builds the URL when it's pressed and opens it in
   the same tab with `location.assign`. The URL is never written into the page
@@ -255,11 +266,13 @@ link had.
    key's origin, carrying only `tier` and `forwarded=1` (which that origin's
    entry removes, and analytics counts), before the app mounts. The keys are a
    fixed list in the app, never an origin read from the URL:
-   - `beta` → `https://beta.app.witnesswork.app`, in Beta and production
-     builds.
+   - `beta` → `https://beta.app.witnesswork.app`, in production builds only.
+     It serves checkouts that started on Beta while Beta web used the
+     production config (ADR 0067).
 
-   Development builds have no key: the sandbox config returns straight to
-   `http://localhost:8081/supporter/thank-you`.
+   Development and Beta builds have no key: their configs return straight to
+   `http://localhost:8081/supporter/thank-you` and
+   `https://beta.app.witnesswork.app/supporter/thank-you`.
 
 3. **It checks the purchase.** It asks RevenueCat for the customer info again,
    bypassing any copy the SDK keeps, then forces the account link

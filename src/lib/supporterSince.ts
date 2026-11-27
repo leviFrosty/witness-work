@@ -4,6 +4,7 @@ import {
   PurchasesSubscriptionInfo,
 } from 'react-native-purchases'
 import { appVariant, type AppVariant } from '@/lib/appVariant'
+import { webBillingFor } from '@/lib/webBilling'
 
 export const LIFETIME_SUPPORTER_ENTITLEMENT = 'Lifetime Supporter'
 
@@ -59,10 +60,11 @@ export const supporterSinceDate = (
   const activeSubscriptionProducts = new Set(
     customer?.activeSubscriptions ?? []
   )
+  const countsWebSandbox = webBillingFor(variant) === 'sandbox'
   let earliest: number | null = null
   for (const entitlement of Object.values(active)) {
     let t: number | null
-    if (variant !== 'development' && isWebSandbox(entitlement)) {
+    if (!countsWebSandbox && isWebSandbox(entitlement)) {
       t = hiddenSubscriptionStart(customer, activeSubscriptionProducts)
     } else {
       const isLifetimeGrant =

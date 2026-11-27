@@ -121,6 +121,9 @@ NOTES_IMPORT_PROVIDERS = "azure"
 NOTES_IMPORT_MAX_OUTPUT_TOKENS = "32000"
 # TestFlight builds attest in Apple's production App Attest environment.
 APP_ATTEST_ENVIRONMENT = "production"
+# Count RevenueCat Billing (web) sandbox subscriptions as Supporter: Beta's web
+# app sells through the Stripe sandbox (witness-work ADR 0067). Never in [vars].
+REVENUECAT_COUNT_WEB_SANDBOX = "true"
 # The WitnessWork Beta app (witness-work app.config.ts, beta variant).
 IOS_BUNDLE_ID = "com.leviwilkerson.jwtimebeta"
 # Deprecated and ignored: Supporter status follows witness-work ADR 0014.
@@ -491,7 +494,7 @@ APP_ATTEST_ENVIRONMENT = "development"
 IOS_BUNDLE_ID = "com.leviwilkerson.jwtimedev"
 # Deprecated and ignored: Supporter status follows witness-work ADR 0014.
 REVENUECAT_ENTITLEMENT_ID = "Supporter"
-# Count RevenueCat Billing (web) sandbox subscriptions as Supporter; dev only, never in [vars].
+# Count RevenueCat Billing (web) sandbox subscriptions as Supporter. Never in [vars].
 REVENUECAT_COUNT_WEB_SANDBOX = "true"
 # Runtime-limit env fallbacks. Named environments do not inherit [vars], so all
 # five are explicitly repeated here. KV `notes-import:limits` overrides each

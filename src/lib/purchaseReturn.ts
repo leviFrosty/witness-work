@@ -8,13 +8,13 @@ export const PURCHASE_RETURN_PATH = '/supporter/thank-you'
 
 const RETURN_HOSTS: Record<AppVariant, string> = {
   development: 'http://localhost:8081',
-  beta: 'https://app.witnesswork.app',
+  beta: 'https://beta.app.witnesswork.app',
   production: 'https://app.witnesswork.app',
 }
 
 const RETURN_KEYS: Record<AppVariant, Partial<Record<ReturnKey, string>>> = {
   development: {},
-  beta: { beta: 'https://beta.app.witnesswork.app' },
+  beta: {},
   production: { beta: 'https://beta.app.witnesswork.app' },
 }
 

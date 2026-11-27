@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ScrollView, View, ViewProps } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import useTheme from '@/contexts/theme'
@@ -145,12 +145,18 @@ function ChipScroller({
 }) {
   const theme = useTheme()
   const color = fadeColor ?? theme.colors.background
-  const [viewport, setViewport] = useState(0)
-  const [content, setContent] = useState(0)
-  const [offset, setOffset] = useState(0)
-  const scrolled = flowScrollX(offset, content, viewport, isRtlLayout())
-  const fadeStart = scrolled > 1
-  const fadeEnd = scrolled < content - viewport - 1
+  const metrics = useRef({ viewport: 0, content: 0, offset: 0 })
+  const [fades, setFades] = useState({ start: false, end: false })
+
+  const syncFades = () => {
+    const { viewport, content, offset } = metrics.current
+    const scrolled = flowScrollX(offset, content, viewport, isRtlLayout())
+    const start = scrolled > 1
+    const end = scrolled < content - viewport - 1
+    setFades((prev) =>
+      prev.start === start && prev.end === end ? prev : { start, end }
+    )
+  }
 
   return (
     <View style={[{ marginHorizontal: -bleed }, style]} {...props}>
@@ -159,9 +165,18 @@ function ChipScroller({
         accessibilityRole='radiogroup'
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
-        onLayout={(e) => setViewport(e.nativeEvent.layout.width)}
-        onContentSizeChange={(width) => setContent(width)}
-        onScroll={(e) => setOffset(e.nativeEvent.contentOffset.x)}
+        onLayout={(e) => {
+          metrics.current.viewport = e.nativeEvent.layout.width
+          syncFades()
+        }}
+        onContentSizeChange={(width) => {
+          metrics.current.content = width
+          syncFades()
+        }}
+        onScroll={(e) => {
+          metrics.current.offset = e.nativeEvent.contentOffset.x
+          syncFades()
+        }}
         contentContainerStyle={{
           paddingHorizontal: bleed,
           gap: 8,
@@ -170,8 +185,8 @@ function ChipScroller({
       >
         {children}
       </ScrollView>
-      {fadeStart && <EdgeFade side='start' color={color} />}
-      {fadeEnd && <EdgeFade side='end' color={color} />}
+      {fades.start && <EdgeFade side='start' color={color} />}
+      {fades.end && <EdgeFade side='end' color={color} />}
     </View>
   )
 }

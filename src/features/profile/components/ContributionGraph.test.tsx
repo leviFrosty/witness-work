@@ -14,9 +14,12 @@ vi.mock('react-native', () => ({
 }))
 vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView' },
-  runOnJS: (fn: unknown) => fn,
   useAnimatedStyle: () => ({}),
   useSharedValue: (value: number) => ({ value }),
+}))
+vi.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn: (...args: unknown[]) => void, ...args: unknown[]) =>
+    fn(...args),
 }))
 type ScrubEvent = { x: number; y: number; pointerType: string }
 const pan = vi.hoisted(

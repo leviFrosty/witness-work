@@ -12,11 +12,11 @@ import { Platform, Pressable, useWindowDimensions, View } from 'react-native'
 import { Image } from 'expo-image'
 import Animated, {
   interpolate,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
@@ -93,7 +93,7 @@ const Avatar = ({
 
   const close = () => {
     progress.value = withTiming(0, { duration: 200 }, (finished) => {
-      if (finished) runOnJS(setOpen)(false)
+      if (finished) scheduleOnRN(setOpen, false)
     })
   }
 

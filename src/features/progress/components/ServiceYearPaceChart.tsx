@@ -14,11 +14,11 @@ import {
   type ComposedGesture,
 } from 'react-native-gesture-handler'
 import {
-  runOnJS,
   useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import {
   Area,
   CartesianChart,
@@ -149,7 +149,7 @@ const ServiceYearPaceChart = ({
   useAnimatedReaction(
     () => (state.isActive.value ? state.matchedIndex.value : -1),
     (index, previous) => {
-      if (index !== previous) runOnJS(handleIndex)(index, hovering.value)
+      if (index !== previous) scheduleOnRN(handleIndex, index, hovering.value)
     }
   )
 
@@ -164,7 +164,8 @@ const ServiceYearPaceChart = ({
         Gesture.Hover()
           .onBegin((e) => {
             'worklet'
-            runOnJS(notePointerHover)(
+            scheduleOnRN(
+              notePointerHover,
               e.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
             )
             hoverTo(e.x, e.y)

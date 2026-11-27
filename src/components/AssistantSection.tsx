@@ -244,24 +244,6 @@ const AssistantSection = ({
     })
   }, [recommendation, replaceLastAssistantEvent])
 
-  const Wrapper = ({ gap, children }: { gap: number; children: ReactNode }) => {
-    if (standalone) {
-      return <Card style={{ gap }}>{children}</Card>
-    }
-    return (
-      <View
-        style={{
-          gap,
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-        }}
-      >
-        {children}
-      </View>
-    )
-  }
-
   const hide = () => {
     if (recommendation) handleDismiss()
     else onDismiss?.()
@@ -302,7 +284,7 @@ const AssistantSection = ({
       last?.action === 'accepted' && projection.state === 'projected_over_goal'
     if (!justAccepted) return null
     return (
-      <Wrapper gap={0}>
+      <AssistantSectionWrapper standalone={standalone} gap={0}>
         {menuArea(
           0,
           <Text
@@ -315,7 +297,7 @@ const AssistantSection = ({
             {i18n.t('assistant.collapsedAfterAccept')}
           </Text>
         )}
-      </Wrapper>
+      </AssistantSectionWrapper>
     )
   }
 
@@ -323,7 +305,7 @@ const AssistantSection = ({
 
   if (!hasSeenAvailabilityOnboarding) {
     return (
-      <Wrapper gap={10}>
+      <AssistantSectionWrapper standalone={standalone} gap={10}>
         {menuArea(
           10,
           <>
@@ -373,7 +355,7 @@ const AssistantSection = ({
           open={availabilityOpen}
           onOpenChange={setAvailabilityOpen}
         />
-      </Wrapper>
+      </AssistantSectionWrapper>
     )
   }
 
@@ -405,7 +387,7 @@ const AssistantSection = ({
   const headlineSegments = segmentBoldMarkup(headlineText)
 
   return (
-    <Wrapper gap={10}>
+    <AssistantSectionWrapper standalone={standalone} gap={10}>
       {menuArea(
         10,
         <>
@@ -509,7 +491,34 @@ const AssistantSection = ({
         open={availabilityOpen}
         onOpenChange={setAvailabilityOpen}
       />
-    </Wrapper>
+    </AssistantSectionWrapper>
+  )
+}
+
+const AssistantSectionWrapper = ({
+  standalone,
+  gap,
+  children,
+}: {
+  standalone: boolean
+  gap: number
+  children: ReactNode
+}) => {
+  const theme = useTheme()
+  if (standalone) {
+    return <Card style={{ gap }}>{children}</Card>
+  }
+  return (
+    <View
+      style={{
+        gap,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+      }}
+    >
+      {children}
+    </View>
   )
 }
 

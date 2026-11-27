@@ -6,10 +6,10 @@ import {
   PointerType,
 } from 'react-native-gesture-handler'
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
 import { forwardSign, isRtlLayout } from '@/lib/direction'
@@ -235,20 +235,20 @@ const ContributionGraph = ({
       lastIdx.value = idx
       if (idx < 0) {
         ringOpacity.value = 0
-        runOnJS(clearHover)()
+        scheduleOnRN(clearHover)
         return
       }
 
       ringX.value = sign * col * stride
       ringY.value = row * stride
       ringOpacity.value = 1
-      runOnJS(applyHover)(col, row, touch)
+      scheduleOnRN(applyHover, col, row, touch)
     }
     const endScrub = () => {
       'worklet'
       lastIdx.value = -1
       ringOpacity.value = 0
-      runOnJS(clearHover)()
+      scheduleOnRN(clearHover)
     }
 
     const pan = Gesture.Pan()
@@ -268,7 +268,8 @@ const ContributionGraph = ({
     const hover = Gesture.Hover()
       .onBegin((e) => {
         'worklet'
-        runOnJS(notePointerHover)(
+        scheduleOnRN(
+          notePointerHover,
           e.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
         )
         scrubTo(e.x, e.y, false)

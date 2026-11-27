@@ -10,6 +10,7 @@ export type NotificationKind =
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'
+  | 'auto_rescheduled_follow_up'
   | 'reminder'
   | 'auxiliary_month'
   | 'hours_logging'

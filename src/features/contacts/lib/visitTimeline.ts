@@ -36,6 +36,8 @@ export type UpNext = {
   date: Date
   notifyMe: boolean
   topic?: string
+  autoRescheduledFrom?: Date
+  autoRescheduleCount?: number
 }
 
 const visitsAnswering = (visit: Visit, contactVisits: Visit[]): Visit[] => {
@@ -66,6 +68,12 @@ export const getUpNext = (
         date,
         notifyMe: followUp.notifyMe,
         topic: followUp.topic?.trim() || undefined,
+        ...(followUp.autoRescheduledFrom
+          ? { autoRescheduledFrom: new Date(followUp.autoRescheduledFrom) }
+          : {}),
+        ...(followUp.autoRescheduleCount
+          ? { autoRescheduleCount: followUp.autoRescheduleCount }
+          : {}),
       }
     }
   }

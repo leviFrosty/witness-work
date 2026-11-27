@@ -80,7 +80,9 @@ export function firedReminders(
   return reminderOccurrences(args)
     .filter(
       (reminder): reminder is TrayReminder =>
-        reminder.kind !== 'monthReport' && reminder.kind !== 'routine'
+        !reminder.contingent &&
+        reminder.kind !== 'monthReport' &&
+        reminder.kind !== 'routine'
     )
     .filter(
       (reminder) =>

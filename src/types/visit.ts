@@ -38,6 +38,16 @@ export type Visit = {
     dismissed?: boolean
 
     buddies?: string[]
+
+    autoReschedule?: boolean
+
+    autoRescheduledFrom?: Date
+
+    autoRescheduledAt?: number
+
+    autoRescheduleCount?: number
+
+    autoRescheduleSkippedAt?: number
   }
   isBibleStudy: boolean
   notAtHome?: boolean

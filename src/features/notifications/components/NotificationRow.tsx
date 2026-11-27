@@ -65,20 +65,29 @@ export default function NotificationRow({
 }) {
   const theme = useTheme()
   const { color, background } = toneColors(theme, item.tone)
-  const [primary, secondary] = item.actions ?? []
+  const [primary, ...secondaryActions] = item.actions ?? []
   const lead = item.art ? UNLOCK_ART_SIZE : ICON_SIZE
 
   return (
     <Pressable
       onPress={primary ? () => onAction(primary) : undefined}
       accessibilityActions={[
-        ...(secondary ? [{ name: 'secondary', label: secondary.label }] : []),
+        ...secondaryActions.map((action, index) => ({
+          name: index === 0 ? 'secondary' : `action_${action.id}`,
+          label: action.label,
+        })),
         { name: 'dismiss', label: i18n.t('dismiss') },
       ]}
       onAccessibilityAction={({ nativeEvent }) => {
         if (nativeEvent.actionName === 'dismiss') onDismiss()
-        else if (nativeEvent.actionName === 'secondary' && secondary)
-          onAction(secondary)
+        else if (nativeEvent.actionName === 'secondary' && secondaryActions[0])
+          onAction(secondaryActions[0])
+        else {
+          const matched = secondaryActions.find(
+            (action) => `action_${action.id}` === nativeEvent.actionName
+          )
+          if (matched) onAction(matched)
+        }
       }}
       style={({ pressed }) => ({
         gap: 10,
@@ -160,9 +169,13 @@ export default function NotificationRow({
       </XView>
 
       {primary ? (
-        <XView style={{ gap: 8, paddingLeft: lead + LEAD_GAP }}>
+        <XView
+          style={{ gap: 8, paddingLeft: lead + LEAD_GAP, flexWrap: 'wrap' }}
+        >
           <Button
             noTransform
+            accessibilityRole='button'
+            testID={`notification-action-${primary.id}`}
             onPress={() => onAction(primary)}
             style={{
               paddingVertical: 7,
@@ -181,10 +194,13 @@ export default function NotificationRow({
               {primary.label}
             </Text>
           </Button>
-          {secondary ? (
+          {secondaryActions.map((action) => (
             <Button
+              key={action.id}
               noTransform
-              onPress={() => onAction(secondary)}
+              accessibilityRole='button'
+              testID={`notification-action-${action.id}`}
+              onPress={() => onAction(action)}
               style={{
                 paddingVertical: 7,
                 paddingHorizontal: 12,
@@ -193,10 +209,10 @@ export default function NotificationRow({
               }}
             >
               <Text style={{ fontSize: theme.fontSize('sm') }}>
-                {secondary.label}
+                {action.label}
               </Text>
             </Button>
-          ) : null}
+          ))}
         </XView>
       ) : null}
     </Pressable>

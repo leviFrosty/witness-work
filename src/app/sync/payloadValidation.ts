@@ -87,6 +87,11 @@ const visit = record.extend({
       notifications: z.array(notification).optional(),
       reminderOffsetMinutes: z.number().finite().nonnegative().optional(),
       buddies: z.array(z.string()).optional(),
+      autoReschedule: z.boolean().optional(),
+      autoRescheduledFrom: date.optional(),
+      autoRescheduledAt: timestamp.optional(),
+      autoRescheduleCount: z.number().int().nonnegative().optional(),
+      autoRescheduleSkippedAt: timestamp.optional(),
     })
     .passthrough()
     .optional(),
@@ -625,6 +630,13 @@ const preferenceShapes = z
     tenureStartDate: date.nullable().optional(),
     returnVisitTimeOffset: offset.nullable().optional(),
     returnVisitNotificationOffset: offset.nullable().optional(),
+    autoRescheduleMissedFollowUps: z.boolean().optional(),
+    autoRescheduleOffset: offset.nullable().optional(),
+    autoRescheduleGrace: z
+      .enum(['4hours', 'nextMorning', '24hours'])
+      .optional(),
+    autoRescheduleMaxCount: z.number().int().positive().nullable().optional(),
+    autoRescheduleEnabledAt: timestamp.nullable().optional(),
     planNotificationOffset: offset.nullable().optional(),
     unloggedDayReminderTime: z.number().int().min(0).max(1439).optional(),
     unloggedDayRemindersEnabledAt: timestamp.nullable().optional(),

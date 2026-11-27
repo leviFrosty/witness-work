@@ -6,6 +6,7 @@ import {
   DoorClosed as DoorClosedIcon,
   CalendarDays as CalendarDaysIcon,
   Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
   TriangleAlert as TriangleAlertIcon,
   X as XIcon,
 } from 'lucide-react-native'
@@ -25,7 +26,8 @@ import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
-import { formatRelative, formatTime } from '@/lib/dates'
+import { formatMonthDayCompact, formatRelative, formatTime } from '@/lib/dates'
+import { isAutoReschedulePaused } from '@/lib/autoRescheduleFollowUps'
 import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
@@ -81,6 +83,10 @@ const ContactVisitCard = ({
 }: Props) => {
   const theme = useTheme()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  const autoRescheduleEnabled = usePreferences(
+    (s) => s.autoRescheduleMissedFollowUps
+  )
+  const autoRescheduleMaxCount = usePreferences((s) => s.autoRescheduleMaxCount)
   const notAtHome = useLogNotAtHome()
   const triedToday = useConversations((s) =>
     s.conversations.some(
@@ -255,6 +261,62 @@ const ContactVisitCard = ({
               {plan.topic}
             </Text>
           )}
+          {upcoming && plan?.autoRescheduledFrom && (
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            >
+              <LucideIcon
+                icon={RefreshCwIcon}
+                size={12}
+                color={theme.colors.accent}
+              />
+              <Text
+                style={{
+                  ...captionStyle,
+                  color: theme.colors.accent,
+                  flexShrink: 1,
+                }}
+              >
+                {autoRescheduleMaxCount !== null && plan.autoRescheduleCount
+                  ? i18n.t('autoRescheduledFromCount', {
+                      date: formatMonthDayCompact(
+                        moment(plan.autoRescheduledFrom)
+                      ),
+                      count: plan.autoRescheduleCount,
+                      max: autoRescheduleMaxCount,
+                    })
+                  : i18n.t('autoRescheduledFrom', {
+                      date: formatMonthDayCompact(
+                        moment(plan.autoRescheduledFrom)
+                      ),
+                    })}
+              </Text>
+            </View>
+          )}
+          {plan?.status === 'missed' &&
+            autoRescheduleEnabled &&
+            isAutoReschedulePaused(plan.visit, autoRescheduleMaxCount) && (
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              >
+                <LucideIcon
+                  icon={RefreshCwIcon}
+                  size={12}
+                  color={theme.colors.warnText}
+                />
+                <Text
+                  style={{
+                    ...captionStyle,
+                    color: theme.colors.warnText,
+                    flexShrink: 1,
+                  }}
+                >
+                  {i18n.t('autoReschedulePausedNote', {
+                    count: plan.visit.followUp?.autoRescheduleCount ?? 0,
+                  })}
+                </Text>
+              </View>
+            )}
           {upcoming && plan?.notifyMe && (
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}

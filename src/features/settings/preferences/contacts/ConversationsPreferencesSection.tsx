@@ -9,6 +9,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
+import AutoRescheduleSettingsRows from '@/features/settings/preferences/contacts/AutoRescheduleSettingsRows'
 
 const ConversationsPreferencesSection = () => {
   const { returnVisitTimeOffset, prefillAddress, set } = usePreferences()
@@ -89,7 +90,6 @@ const ConversationsPreferencesSection = () => {
           <InputRowSwitch
             label={i18n.t('autoFillAddressFromLastContact')}
             info={i18n.t('autoFillAddressFromLastContact_description')}
-            lastInSection
             value={prefillAddress.enabled}
             onValueChange={(value) =>
               set({
@@ -101,6 +101,8 @@ const ConversationsPreferencesSection = () => {
             }
           />
         </SettingsSearchTarget>
+
+        <AutoRescheduleSettingsRows lastInSection />
       </Section>
     </View>
   )

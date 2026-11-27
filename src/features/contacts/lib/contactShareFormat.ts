@@ -147,6 +147,11 @@ const FOLLOW_UP_FIELDS: FieldRules<FollowUp> = {
   dismissed: optional(z.boolean()),
 
   buddies: omit,
+  autoReschedule: omit,
+  autoRescheduledFrom: omit,
+  autoRescheduledAt: omit,
+  autoRescheduleCount: omit,
+  autoRescheduleSkippedAt: omit,
 }
 
 const VISIT_FIELDS: FieldRules<Visit> = {

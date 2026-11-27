@@ -30,6 +30,7 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 const HINT_KEYS: Record<SyncDeviceHint, TranslationKey> = {
   stale: 'iCloudDeviceHint_stale',
   'newer-version': 'iCloudDeviceHint_newerVersion',
+  'other-account': 'iCloudDeviceHint_otherAccount',
   unreadable: 'iCloudDeviceHint_unreadable',
   'pre-reset': 'iCloudDeviceHint_preReset',
   legacy: 'iCloudDeviceHint_legacy',

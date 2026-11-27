@@ -85,6 +85,17 @@ export const appConfigDocs = describeRoute({
             description:
               'Cloud Sync’s switches (witness-work ADR 0030), so a device without a session knows whether opening one would get it Cloud Sync. `GET /accounts/v1/sync` gives the account’s own answer.',
           }),
+        platformSync: z
+          .object({
+            sealing: z.boolean().meta({
+              description:
+                'Whether an iCloud or Google Drive folder may switch to sealed (end-to-end encrypted) files (witness-work ADR 0067 §6). KV `sync:platform-sealing`: `off` pauses new switches; absent or unreadable is on. Folders already sealed stay sealed.',
+            }),
+          })
+          .meta({
+            description:
+              'The rollout switch for sealing iCloud and Google Drive sync, which never touches this API otherwise.',
+          }),
         webSignup: z
           .object({
             enabled: z.boolean().meta({

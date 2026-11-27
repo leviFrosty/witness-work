@@ -9,6 +9,27 @@ export function registerAndroidSyncTransport(transport: SyncTransport): void {
 export const registeredAndroidTransport = (): SyncTransport | null =>
   androidTransport
 
+let sealer: ((transport: SyncTransport) => SyncTransport) | null = null
+const sealed = new WeakMap<SyncTransport, SyncTransport>()
+
+export function registerPlatformSealer(
+  wrap: ((transport: SyncTransport) => SyncTransport) | null
+): void {
+  sealer = wrap
+}
+
+export function sealedPlatformTransport(
+  transport: SyncTransport
+): SyncTransport {
+  if (!sealer) return transport
+  let wrapped = sealed.get(transport)
+  if (!wrapped) {
+    wrapped = sealer(transport)
+    sealed.set(transport, wrapped)
+  }
+  return wrapped
+}
+
 let cloudSyncCopy = {
   offered: () => false,
   used: () => false,

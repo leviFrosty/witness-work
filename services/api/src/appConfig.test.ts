@@ -41,6 +41,7 @@ describe('GET /app/v1/config', () => {
       ok: true,
       minAppVersion: '1.42.0',
       sync: { enabled: false, changes: false, entitlement: 'everyone' },
+      platformSync: { sealing: true },
       webSignup: { enabled: false, turnstileSiteKey: null },
       buddies: { maxBuddies: 50, maxOpenInvites: 5 },
       country: null,
@@ -58,11 +59,29 @@ describe('GET /app/v1/config', () => {
     expect(await response.json()).toEqual({
       ok: true,
       sync: { enabled: false, changes: false, entitlement: 'everyone' },
+      platformSync: { sealing: true },
       webSignup: { enabled: false, turnstileSiteKey: null },
       buddies: { maxBuddies: 50, maxOpenInvites: 5 },
       country: null,
       regionCode: null,
     })
+  })
+
+  it('pauses sealing iCloud and Google Drive folders with sync:platform-sealing', async () => {
+    const sealing = async (value?: string) => {
+      const base = await env()
+      if (value !== undefined)
+        await base.NOTES_KV.put('sync:platform-sealing', value)
+      const response = await app.fetch(
+        new Request('https://ww-proxy.leviwilkerson.com/app/v1/config'),
+        base
+      )
+      return ((await response.json()) as { platformSync: unknown }).platformSync
+    }
+    expect(await sealing()).toEqual({ sealing: true })
+    expect(await sealing('off')).toEqual({ sealing: false })
+    expect(await sealing('false')).toEqual({ sealing: false })
+    expect(await sealing('on')).toEqual({ sealing: true })
   })
 
   it('says whether Cloud Sync is on and who gets it', async () => {

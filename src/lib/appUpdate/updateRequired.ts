@@ -53,6 +53,8 @@ export type AppConfig = {
 
   sync: AppSyncConfig | null
 
+  platformSealing?: boolean
+
   webSignup?: AppWebSignupConfig
 
   buddies?: AppBuddiesConfig
@@ -75,6 +77,7 @@ export async function fetchAppConfig(
       entitlement?: unknown
       changes?: unknown
     } | null
+    platformSync?: { sealing?: unknown } | null
     webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
     buddies?: { maxBuddies?: unknown; maxOpenInvites?: unknown } | null
     country?: unknown
@@ -86,8 +89,15 @@ export async function fetchAppConfig(
   })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion, sync, webSignup, buddies, country, regionCode } =
-    response.data
+  const {
+    minAppVersion,
+    sync,
+    platformSync,
+    webSignup,
+    buddies,
+    country,
+    regionCode,
+  } = response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
     sync:
@@ -99,6 +109,9 @@ export async function fetchAppConfig(
             changes: sync.changes === true,
           }
         : null,
+    ...(typeof platformSync?.sealing === 'boolean' && {
+      platformSealing: platformSync.sealing,
+    }),
     ...(webSignup &&
       typeof webSignup.enabled === 'boolean' && {
         webSignup: {
@@ -144,8 +157,13 @@ export function createAppConfigCheck(deps: {
     lastAt = deps.now()
     pending = deps
       .fetchConfig()
-      .then(({ minAppVersion, sync = null, buddies }) => {
-        deps.onConfig?.({ minAppVersion, sync, ...(buddies && { buddies }) })
+      .then(({ minAppVersion, sync = null, buddies, platformSealing }) => {
+        deps.onConfig?.({
+          minAppVersion,
+          sync,
+          ...(platformSealing !== undefined && { platformSealing }),
+          ...(buddies && { buddies }),
+        })
         const required = useUpdateRequired.getState().required
         if (required?.source === 'server') return
         const below = belowMinVersion(deps.currentVersion(), minAppVersion)

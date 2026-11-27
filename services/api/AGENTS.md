@@ -2244,6 +2244,13 @@ iCloud and Google Drive; each device uses exactly one. Code in
   - **Re-sealing** (`sync/changes/reseal`): after a key change, one
     change's bytes under the new key. Sequence, slot and time stay, and no
     socket is told. Live session, 7 days, as `x-ww-reseal`.
+- **iCloud and Google Drive sealing** (witness-work ADR 0067 §6): those
+  folders never touch this worker, but `GET /app/v1/config` carries their
+  rollout switch as `platformSync: { sealing }`, from KV
+  `sync:platform-sealing` (`off`/`false` pauses new folders from switching to
+  sealed files; absent or unreadable is on). Folders already sealed stay
+  sealed. `wrangler kv key put --binding NOTES_KV sync:platform-sealing off`
+  (add `--env beta` for Beta); delete the key to resume.
 - **Switches** (KV in `NOTES_KV`, edge-cached 60 s): `sync:enabled`
   (`true`/`on`, absent → `SYNC_ENABLED`: Beta and dev `"true"`, prod `"false"`) and
   `sync:entitlement` (`supporter` makes it a Supporter benefit again, anything

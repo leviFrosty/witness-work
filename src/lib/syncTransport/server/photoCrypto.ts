@@ -94,18 +94,34 @@ async function chunkedAead(
   return { output, tag: mac.digest() }
 }
 
-export async function sealPhoto(
+export const sealPhoto = (
   photoKey: Uint8Array,
   bytes: Uint8Array,
   address: PhotoAddress,
   nonce: Uint8Array,
   pause: Pause = noPause
+): Promise<Uint8Array> =>
+  sealBytes(photoKey, bytes, photoAad(address), nonce, pause)
+
+export const openPhoto = (
+  photoKey: Uint8Array,
+  blob: Uint8Array,
+  address: PhotoAddress,
+  pause: Pause = noPause
+): Promise<Uint8Array> => openBytes(photoKey, blob, photoAad(address), pause)
+
+export async function sealBytes(
+  key: Uint8Array,
+  bytes: Uint8Array,
+  aad: Uint8Array,
+  nonce: Uint8Array,
+  pause: Pause = noPause
 ): Promise<Uint8Array> {
   if (nonce.length !== NONCE_LENGTH) throw new Error('Nonce must be 24 bytes')
   const { output, tag } = await chunkedAead(
-    photoKey,
+    key,
     nonce,
-    photoAad(address),
+    aad,
     bytes,
     'seal',
     pause
@@ -113,10 +129,10 @@ export async function sealPhoto(
   return concatBytes(new Uint8Array([BLOB_VERSION]), nonce, output, tag)
 }
 
-export async function openPhoto(
-  photoKey: Uint8Array,
+export async function openBytes(
+  key: Uint8Array,
   blob: Uint8Array,
-  address: PhotoAddress,
+  aad: Uint8Array,
   pause: Pause = noPause
 ): Promise<Uint8Array> {
   if (blob.length < 1 + NONCE_LENGTH + TAG_LENGTH || blob[0] !== BLOB_VERSION)
@@ -124,9 +140,9 @@ export async function openPhoto(
   const nonce = blob.subarray(1, 1 + NONCE_LENGTH)
   const ciphertext = blob.subarray(1 + NONCE_LENGTH, blob.length - TAG_LENGTH)
   const { output, tag } = await chunkedAead(
-    photoKey,
+    key,
     nonce,
-    photoAad(address),
+    aad,
     ciphertext,
     'open',
     pause

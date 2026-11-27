@@ -14,6 +14,7 @@ import { usePreferences } from '@/stores/preferences'
 import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 import { registerCloudSync } from '@/app/sync/cloudSync'
+import { registerPlatformSealing } from '@/app/sync/platformSealing'
 import { installKeyChange } from '@/app/account/keyChange'
 import { promptUnlockAtLaunch } from '@/app/app-lock/unlock'
 import { registerRewardProbe, registerRewardSample } from '@/lib/actionRewards'
@@ -35,6 +36,7 @@ export function initializeApp() {
 
   if (Platform.OS === 'android')
     registerAndroidSyncTransport(googleDriveTransport)
+  if (Platform.OS !== 'web') registerPlatformSealing()
 
   if (BuddiesKeychain.isAvailable()) registerCloudSync()
   else if (webRuntime) {

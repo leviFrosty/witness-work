@@ -35,6 +35,7 @@ import {
 import { isKnownOffline, useOnline } from '@/lib/http/online'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import GoogleDriveAccountSection from '@/features/settings/components/sync/GoogleDriveAccountSection'
+import PlatformSealingSection from '@/features/settings/components/sync/PlatformSealingSection'
 import CloudSyncPhotoStorageSection from '@/features/settings/components/sync/CloudSyncPhotoStorageSection'
 import PhotoStorageAlmostFullCard from '@/features/settings/components/sync/PhotoStorageAlmostFullCard'
 import { ICloudAccount, iCloudSync } from '@/app/sync/iCloudSync'
@@ -399,10 +400,16 @@ const PreferencesiCloudScreenInner = () => {
             source: 'settings',
             reason: decision.reason,
           })
-          Alert.alert(
-            i18n.t(syncKey('iCloudRemoteNotReady_title')),
-            i18n.t(syncKey('iCloudRemoteNotReady_description'))
-          )
+          if (decision.reason === 'other-account')
+            Alert.alert(
+              i18n.t('iCloudRemoteOtherAccount_title'),
+              i18n.t(syncKey('iCloudRemoteOtherAccount_description'))
+            )
+          else
+            Alert.alert(
+              i18n.t(syncKey('iCloudRemoteNotReady_title')),
+              i18n.t(syncKey('iCloudRemoteNotReady_description'))
+            )
           break
         case 'unavailable':
           Alert.alert(
@@ -1024,6 +1031,8 @@ const PreferencesiCloudScreenInner = () => {
         <CloudSyncPhotoStorageSection />
 
         {googleDrive && !onCloud && <GoogleDriveAccountSection />}
+
+        {iCloudSyncEnabled && !onCloud && <PlatformSealingSection />}
 
         {!googleDrive && !onCloud && !available && (
           <Section>

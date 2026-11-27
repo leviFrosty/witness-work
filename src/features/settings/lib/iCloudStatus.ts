@@ -70,9 +70,11 @@ export function buildICloudStatus({
       text: i18n.t(
         issue === 'newer-version'
           ? syncKey('iCloudStatusNewerVersion')
-          : issue === 'invalid-file'
-            ? syncKey('iCloudStatusInvalidFile')
-            : syncKey('iCloudStatusRetryNeeded')
+          : issue === 'other-account'
+            ? 'iCloudStatusOtherAccount'
+            : issue === 'invalid-file'
+              ? syncKey('iCloudStatusInvalidFile')
+              : syncKey('iCloudStatusRetryNeeded')
       ),
     }
   if (uploadIssue === 'upload-failed')

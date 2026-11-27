@@ -36,6 +36,9 @@ vi.mock('@/lib/syncTransport/googleDrive/googleDriveTransport', () => ({
   googleDriveTransport: {},
 }))
 vi.mock('@/app/sync/cloudSync', () => ({ registerCloudSync: vi.fn() }))
+vi.mock('@/app/sync/platformSealing', () => ({
+  registerPlatformSealing: vi.fn(),
+}))
 vi.mock('@/app/account/keyChange', () => ({ installKeyChange: vi.fn() }))
 const promptUnlockAtLaunch = vi.hoisted(() => vi.fn())
 vi.mock('@/app/app-lock/unlock', () => ({ promptUnlockAtLaunch }))

@@ -23,8 +23,10 @@ export const checkAppConfig = createAppConfigCheck({
   currentVersion: appVersion,
   now: Date.now,
 
-  onConfig: ({ sync: read, buddies }) => {
+  onConfig: ({ sync: read, buddies, platformSealing = false }) => {
     if (buddies) setServerBuddyLimits(buddies)
+    if (usePreferences.getState().platformSyncSealing !== platformSealing)
+      usePreferences.setState({ platformSyncSealing: platformSealing })
     const { changes, ...sync } = read ?? {
       enabled: false,
       entitlement: 'supporter' as const,

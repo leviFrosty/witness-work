@@ -3,6 +3,7 @@ import { isAccountFilename } from '@/lib/accountFile'
 export type SyncDeviceStatus =
   | 'ok'
   | 'newer-version'
+  | 'other-account'
   | 'unreadable'
   | 'pre-reset'
 
@@ -26,6 +27,9 @@ const DAY_MS = 24 * 60 * 60 * 1000
 export function isLegacySyncFilename(filename: string): boolean {
   return !filename.startsWith('witness-work-')
 }
+
+export const syncFilenameForDevice = (deviceId: string): string =>
+  `witness-work-${deviceId}.json`
 
 export function deviceIdFromSyncFilename(filename: string): string | null {
   const match = /^witness-work-(.+)\.json$/.exec(filename)
@@ -62,6 +66,7 @@ export function syncDeviceAgeBucket(
 export type SyncDeviceHint =
   | 'pre-reset'
   | 'newer-version'
+  | 'other-account'
   | 'unreadable'
   | 'legacy'
   | 'stale'
@@ -86,6 +91,7 @@ export function syncDeviceRemoval(
   switch (entry.status) {
     case 'pre-reset':
     case 'unreadable':
+    case 'other-account':
       return 'allowed'
     case 'newer-version':
       return 'update-app'

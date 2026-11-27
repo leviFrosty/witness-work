@@ -53,11 +53,24 @@ describe('webCheckoutUrl', () => {
       webCheckoutUrl({
         ...base,
         origin: 'https://beta.app.witnesswork.app',
-        variant: 'beta',
+        variant: 'production',
         pkg: pkg('One Time $4.99', 'One Time'),
       })
     ).toBe(
       `https://pay.rev.cat/sandbox/tip499/${ID}?package_id=One%20Time&hide_back_button=true&skip_purchase_success=true&utm_content=beta`
+    )
+  })
+
+  it('adds no return key in Beta, whose sandbox config returns to it', () => {
+    expect(
+      webCheckoutUrl({
+        ...base,
+        origin: 'https://beta.app.witnesswork.app',
+        variant: 'beta',
+        pkg: pkg('One Time $4.99', 'One Time'),
+      })
+    ).toBe(
+      `https://pay.rev.cat/sandbox/tip499/${ID}?package_id=One%20Time&hide_back_button=true&skip_purchase_success=true`
     )
   })
 

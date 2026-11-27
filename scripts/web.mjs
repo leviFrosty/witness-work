@@ -201,6 +201,23 @@ export function readOnePasswordFields(
   return values
 }
 
+export const webBillingFor = (variant) =>
+  variant === 'production' ? 'live' : 'sandbox'
+
+const parseLinks = (links) => {
+  try {
+    return JSON.parse(links)
+  } catch {
+    return undefined
+  }
+}
+
+const isLinksObject = (parsed) =>
+  !!parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+
+const isSandboxLink = (link) =>
+  typeof link === 'string' && link.startsWith('sandbox/')
+
 export function revenueCatWebProblems(env) {
   const key = env[REVENUECAT_WEB_KEY]?.trim()
   const links = env[REVENUECAT_WEB_LINKS]?.trim()
@@ -208,28 +225,37 @@ export function revenueCatWebProblems(env) {
   if (!key) problems.push(`${REVENUECAT_WEB_KEY} is empty`)
   else if (!key.startsWith('rcb_sb_'))
     problems.push(
-      `${REVENUECAT_WEB_KEY} isn't a sandbox key (rcb_sb_…); development builds carry only the sandbox's`
+      `${REVENUECAT_WEB_KEY} isn't a sandbox key (rcb_sb_…); development and Beta builds carry only the sandbox's`
     )
   if (!links) problems.push(`${REVENUECAT_WEB_LINKS} is empty`)
   else {
-    let parsed
-    try {
-      parsed = JSON.parse(links)
-    } catch {
+    const parsed = parseLinks(links)
+    if (parsed === undefined)
       problems.push(`${REVENUECAT_WEB_LINKS} isn't valid JSON`)
-    }
-    if (parsed !== undefined) {
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-        problems.push(`${REVENUECAT_WEB_LINKS} must be a JSON object`)
-      else if (
-        !Object.values(parsed).some(
-          (link) => typeof link === 'string' && link.startsWith('sandbox/')
-        )
+    else if (!isLinksObject(parsed))
+      problems.push(`${REVENUECAT_WEB_LINKS} must be a JSON object`)
+    else if (!Object.values(parsed).some(isSandboxLink))
+      problems.push(
+        `${REVENUECAT_WEB_LINKS} has no sandbox/… link; development and Beta builds carry only the sandbox's`
       )
-        problems.push(
-          `${REVENUECAT_WEB_LINKS} has no sandbox/… link; development builds carry only the sandbox's`
-        )
-    }
+  }
+  return problems
+}
+
+export function liveRevenueCatWebProblems(env) {
+  const key = env[REVENUECAT_WEB_KEY]?.trim()
+  const links = env[REVENUECAT_WEB_LINKS]?.trim()
+  const problems = []
+  if (key && (!key.startsWith('rcb_') || key.startsWith('rcb_sb_')))
+    problems.push(
+      `${REVENUECAT_WEB_KEY} isn't a live RevenueCat Billing key (rcb_…, not rcb_sb_…)`
+    )
+  if (links) {
+    const parsed = parseLinks(links)
+    if (!isLinksObject(parsed))
+      problems.push(`${REVENUECAT_WEB_LINKS} must be a JSON object`)
+    else if (Object.values(parsed).some(isSandboxLink))
+      problems.push(`${REVENUECAT_WEB_LINKS} has a sandbox/… link`)
   }
   return problems
 }
@@ -240,9 +266,18 @@ export function fillRevenueCatWeb(
   { op = readOnePasswordFields, inherited = process.env } = {}
 ) {
   const environment = environments[profile]
-  const result = { fromOnePassword: [], problems: [] }
+  const result = { fromOnePassword: [], problems: [], refused: [] }
+  if (!environment) return result
 
-  if (environment?.variant !== 'development') return result
+  if (webBillingFor(environment.variant) === 'live') {
+    const refused = liveRevenueCatWebProblems(env)
+    if (refused.length > 0)
+      result.refused = [
+        `A ${profile} build sells through live Stripe only: ${refused.join('; ')}`,
+      ]
+    return result
+  }
+
   const missing = [REVENUECAT_WEB_KEY, REVENUECAT_WEB_LINKS].filter(
     (key) => !env[key]?.trim()
   )
@@ -261,9 +296,10 @@ export function fillRevenueCatWeb(
   result.problems = revenueCatWebProblems(env)
   if (result.problems.length > 0) {
     const names = [REVENUECAT_WEB_KEY, REVENUECAT_WEB_LINKS].join(' and ')
+    const envFile = profile === 'local' ? '.env.local' : `.env.${profile}`
     const source = environment.revenueCatWebItem
-      ? `Set ${names} in .env.local, or in the 1Password Agents item "${environment.revenueCatWebItem}"${readError ? ` (reading it failed: ${readError})` : ''}`
-      : `Set ${names} in .env.local`
+      ? `Set ${names} in ${envFile}, or in the 1Password Agents item "${environment.revenueCatWebItem}"${readError ? ` (reading it failed: ${readError})` : ''}`
+      : `Set ${names} in ${envFile}`
     result.problems = [`${source}: ${result.problems.join('; ')}`]
   }
   return result
@@ -561,6 +597,8 @@ async function main() {
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files, excluded, api, host } = loadWebEnv(root, profile)
   const revenueCat = fillRevenueCatWeb(env, profile)
+  if (revenueCat.refused.length > 0)
+    throw new Error(revenueCat.refused.join('; '))
 
   for (const problem of revenueCat.problems)
     console.warn(

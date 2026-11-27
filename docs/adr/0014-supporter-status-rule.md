@@ -1,8 +1,11 @@
 ---
 status: accepted
+superseded-by: [0067]
 ---
 
 # Supporter status: an active subscription or a Lifetime grant, never a Tip
+
+> Partly superseded by [ADR 0067](./0067-beta-web-sells-through-the-stripe-sandbox.md): a RevenueCat Billing sandbox subscription counts on Beta too, not only in development.
 
 ## Context
 

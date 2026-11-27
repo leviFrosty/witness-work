@@ -53,15 +53,14 @@ export interface SupporterCheckArgs {
 
 /**
  * Whether this worker counts RevenueCat Billing sandbox subscriptions (Stripe
- * test cards) toward Supporter status: only a development worker with
- * `REVENUECAT_COUNT_WEB_SANDBOX = "true"` (ADR 0014). Production ignores the var.
+ * test cards) toward Supporter status: only where
+ * `REVENUECAT_COUNT_WEB_SANDBOX = "true"`, which wrangler.toml sets for the
+ * development and Beta workers and never for production (witness-work ADR
+ * 0067, which a test enforces). Beta's web app sells through the sandbox.
  */
 export const countsWebSandboxSubscriptions = (env: {
-  APP_ATTEST_ENVIRONMENT?: string
   REVENUECAT_COUNT_WEB_SANDBOX?: string
-}): boolean =>
-  env.APP_ATTEST_ENVIRONMENT === 'development' &&
-  env.REVENUECAT_COUNT_WEB_SANDBOX === 'true'
+}): boolean => env.REVENUECAT_COUNT_WEB_SANDBOX === 'true'
 
 interface RcEntitlement {
   expires_date?: string | null

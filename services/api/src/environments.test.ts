@@ -91,12 +91,16 @@ describe('wrangler.toml environments', () => {
     })
   })
 
-  it('keeps development-only behaviour out of Beta and production', () => {
+  it('counts web sandbox purchases on Beta and development, never production', () => {
+    // witness-work ADR 0067: Beta's web app sells through the Stripe sandbox.
     expect(perEnv((env) => vars(env, 'REVENUECAT_COUNT_WEB_SANDBOX'))).toEqual({
       production: undefined,
-      beta: undefined,
+      beta: 'true',
       dev: 'true',
     })
+  })
+
+  it('keeps development-only behaviour out of Beta and production', () => {
     // Cloudflare's always-passing Turnstile test key.
     expect(vars('dev', 'TURNSTILE_SITE_KEY')).toBe('1x00000000000000000000AA')
     for (const env of ['production', 'beta'] as const) {

@@ -1965,10 +1965,11 @@ ADR 0029). Code in `src/accounts/supporter.ts` (store and `isAccountSupporter`),
   `REVENUECAT_API_URL=http://127.0.0.1:18790 node scripts/verify/dev.mjs up`;
   the launcher sets a synthetic webhook secret.
 - **Web sandbox**: `REVENUECAT_COUNT_WEB_SANDBOX = "true"` lives only in
-  `[env.dev.vars]` (and `.dev.vars.example`), never in top-level `[vars]` or
-  `[env.beta.vars]`, and is ignored unless `APP_ATTEST_ENVIRONMENT` is `development`. With it, a
+  `[env.dev.vars]`, `[env.beta.vars]` (and `.dev.vars.example`), never in
+  top-level `[vars]`; tests fail if production sets it. With it, a
   RevenueCat Billing sandbox subscription counts toward Supporter status
-  (witness-work ADR 0014); without it, it doesn't.
+  (witness-work ADR 0014, ADR 0067: Beta web sells through the Stripe
+  sandbox); without it, it doesn't.
 - **Privacy**: never log or report app user ids, account ids, tokens, the
   webhook's Authorization header, or webhook bodies. The webhook logs only the
   event type and how many linked customers it read. Sentry drops

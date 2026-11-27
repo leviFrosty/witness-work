@@ -1,6 +1,7 @@
 import { appVariant, type AppVariant } from '@/lib/appVariant'
 import type { ReturnKey } from '@/lib/purchaseReturn'
 import { toRevenueCatAppUserId } from '@/lib/serverAccount/revenueCatLink'
+import { webBillingFor } from '@/lib/webBilling'
 
 const WEB_PURCHASE_LINK = /^(?:sandbox\/)?(?!sandbox$)[A-Za-z0-9_-]+$/
 
@@ -27,9 +28,10 @@ export const parseWebPurchaseLinks = (
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return links
   }
+  const sandbox = webBillingFor(variant) === 'sandbox'
   for (const [offering, link] of Object.entries(parsed)) {
     if (!offering || !isWebPurchaseLink(link)) continue
-    if (isSandboxLink(link) && variant !== 'development') continue
+    if (isSandboxLink(link) !== sandbox) continue
     links.set(offering, link)
   }
   return links

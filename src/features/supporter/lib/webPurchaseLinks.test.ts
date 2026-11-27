@@ -13,18 +13,29 @@ describe('parseWebPurchaseLinks', () => {
     '{"Monthly $3.99":"sandbox/abcDEF123","One Time $4.99":"xyz_789-q"}'
 
   it('reads offering ids to links', () => {
-    expect([...parseWebPurchaseLinks(mixed, 'development')]).toEqual([
+    expect([
+      ...parseWebPurchaseLinks(
+        '{"Monthly $3.99":"sandbox/abcDEF123","One Time $4.99":"sandbox/xyz_789-q"}',
+        'development'
+      ),
+    ]).toEqual([
       ['Monthly $3.99', 'sandbox/abcDEF123'],
-      ['One Time $4.99', 'xyz_789-q'],
+      ['One Time $4.99', 'sandbox/xyz_789-q'],
     ])
   })
 
-  it('drops sandbox links outside development builds', () => {
-    for (const variant of ['production', 'beta'] as const) {
+  it('keeps only sandbox links in sandbox builds, development and Beta', () => {
+    for (const variant of ['development', 'beta'] as const) {
       expect([...parseWebPurchaseLinks(mixed, variant)]).toEqual([
-        ['One Time $4.99', 'xyz_789-q'],
+        ['Monthly $3.99', 'sandbox/abcDEF123'],
       ])
     }
+  })
+
+  it('keeps only live links in production', () => {
+    expect([...parseWebPurchaseLinks(mixed, 'production')]).toEqual([
+      ['One Time $4.99', 'xyz_789-q'],
+    ])
   })
 
   it("defaults to this build's variant, production in tests", () => {
@@ -65,7 +76,7 @@ describe('parseWebPurchaseLinks', () => {
         sandboxOfSandbox: 'sandbox/sandbox',
         '': 'abc123',
       }),
-      'development'
+      'production'
     )
     expect([...links]).toEqual([['good', 'abc123']])
   })

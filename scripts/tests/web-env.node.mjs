@@ -17,6 +17,8 @@ import {
   loadWebEnv,
   readOnePasswordFields,
   revenueCatWebProblems,
+  liveRevenueCatWebProblems,
+  webBillingFor,
   oversizedFiles,
   precompressExport,
   restoringFiles,
@@ -27,6 +29,7 @@ import {
   writeSplashLabels,
 } from '../web.mjs'
 import { onDemandRevision, precachePatterns } from '../web-sw.mjs'
+import { webBillingFor as appWebBillingFor } from '../../src/lib/webBilling.ts'
 
 const directories = []
 function fixture() {
@@ -604,16 +607,59 @@ test('beta and production never call op', () => {
     assert.deepEqual(result.fromOnePassword, [], profile)
     assert.equal(env[KEY], undefined, profile)
   }
+})
 
-  const live = { [KEY]: 'rcb_live', [LINKS]: '{"A":"live/x"}' }
+test("the build's billing rule is the app's: sandbox for development and Beta, live for production", () => {
+  assert.equal(webBillingFor('development'), 'sandbox')
+  assert.equal(webBillingFor('beta'), 'sandbox')
+  assert.equal(webBillingFor('production'), 'live')
+  for (const [profile, { variant }] of Object.entries(environments))
+    assert.equal(webBillingFor(variant), appWebBillingFor(variant), profile)
+})
+
+test('beta takes the sandbox values, and warns without them', () => {
+  const sandbox = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
+  const ok = fillRevenueCatWeb({ ...sandbox }, 'beta', { op: noOp })
+  assert.deepEqual(ok.problems, [])
+  assert.deepEqual(ok.refused, [])
+
+  const empty = fillRevenueCatWeb({}, 'beta', { op: noOp })
+  assert.equal(empty.problems.length, 1)
+  assert.match(empty.problems[0], /\.env\.beta/)
+  assert.deepEqual(empty.refused, [])
+
+  const live = { [KEY]: 'rcb_live123', [LINKS]: '{"A":"live/x"}' }
+  const wrong = fillRevenueCatWeb({ ...live }, 'beta', { op: noOp })
+  assert.match(wrong.problems[0], /rcb_sb_/)
+  assert.match(wrong.problems[0], /sandbox\//)
+})
+
+test('production takes only live values, and refuses sandbox ones', () => {
+  const live = { [KEY]: 'rcb_live123', [LINKS]: '{"A":"live/x"}' }
+  assert.deepEqual(fillRevenueCatWeb({ ...live }, 'production', { op: noOp }), {
+    fromOnePassword: [],
+    problems: [],
+    refused: [],
+  })
   assert.deepEqual(
-    fillRevenueCatWeb({ ...live }, 'production', { op: noOp }).problems,
+    fillRevenueCatWeb({}, 'production', { op: noOp }).refused,
     []
   )
-  assert.deepEqual(
-    fillRevenueCatWeb({ ...live }, 'beta', { op: noOp }).problems,
-    []
-  )
+
+  for (const env of [
+    { [KEY]: sandboxKey, [LINKS]: '{"A":"live/x"}' },
+    { [KEY]: 'rcb_live123', [LINKS]: '{"A":"live/x","B":"sandbox/y"}' },
+    { [KEY]: 'appl_abc' },
+    { [LINKS]: '[]' },
+  ]) {
+    const result = fillRevenueCatWeb({ ...env }, 'production', { op: noOp })
+    assert.equal(result.refused.length, 1, JSON.stringify(env))
+    assert.match(result.refused[0], /live Stripe only/)
+    assert.ok(!result.refused[0].includes('rcb_live123'))
+    assert.ok(!result.refused[0].includes('sandbox/y'))
+  }
+
+  assert.deepEqual(liveRevenueCatWebProblems({ [KEY]: 'rcb_live123' }), [])
 })
 
 test('without the values, local reports what to set, whether op failed or lacks them', () => {

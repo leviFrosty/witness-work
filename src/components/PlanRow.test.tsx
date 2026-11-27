@@ -235,7 +235,7 @@ describe('PlanRow', () => {
     expect(text).not.toContain('Type:')
   })
 
-  it('leaves Standard plans unlabeled', () => {
+  it('leaves Standard plans unlabeled and omits the empty badge row', () => {
     let row: ReturnType<typeof create>
     act(() => {
       row = create(
@@ -249,6 +249,7 @@ describe('PlanRow', () => {
       )
     })
     expect(visibleText(row!.toJSON())).not.toContain('Standard')
+    expect(row!.root.findAllByType('Badge' as never)).toHaveLength(0)
   })
 
   const renderMenu = (item: PlanListItem) => {

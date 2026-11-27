@@ -1,8 +1,10 @@
 import { analytics } from '@/lib/analytics'
 import {
   ArrowLeftRight as ArrowLeftRightIcon,
+  Clock as ClockIcon,
   Construction as ConstructionIcon,
 } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
 import SwipeableRow, {
   type Swipeable,
   type SwipeSide,
@@ -40,6 +42,33 @@ import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import type { Category } from '@/types/category'
 import RichNote from '@/components/RichNote'
 import { getNoteText, hasNote } from '@/lib/richText/notes'
+import useReadableAccent from '@/features/service-reports/hooks/useReadableAccent'
+
+const TimeKindIcon = ({ rollover }: { rollover: boolean }) => {
+  const theme = useTheme()
+
+  return (
+    <View
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: 14,
+        borderCurve: 'continuous',
+        borderWidth: rollover ? 1 : 0,
+        borderColor: rollover ? theme.colors.border : 'transparent',
+        backgroundColor: rollover ? 'transparent' : theme.colors.accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <LucideIcon
+        icon={rollover ? ArrowLeftRightIcon : ClockIcon}
+        size={rollover ? 15 : 16}
+        color={rollover ? theme.colors.textAlt : theme.colors.textInverse}
+      />
+    </View>
+  )
+}
 
 interface TimeReportRowProps {
   report: TimeEntry
@@ -50,6 +79,7 @@ interface TimeReportRowProps {
 
 const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const theme = useTheme()
+  const readableAccent = useReadableAccent()
   const cardStyle = useCardStyle()
   const largeText = useAccessibilityTextSize()
   const { deleteServiceReport, deleteRolloverPair, updateServiceReport } =
@@ -64,6 +94,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const totalMinutes = entryMinutes(report)
   const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
   const isRollover = report.rollover === true
+  const hasDetails = isRollover || isLdc || !!categoryLabel || showsNote
   const sign = totalMinutes < 0 ? '−' : '+'
   const dateLabel = formatDate(momentStoredDate(report.date))
 
@@ -252,125 +283,121 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
               ? {
                   backgroundColor: theme.colors.backgroundLighter,
                   paddingVertical: 12,
-                  paddingHorizontal: 15,
+                  paddingHorizontal: 14,
                   borderRadius: cardStyle.borderRadius,
+                  borderCurve: 'continuous',
                   borderWidth: 1,
                   borderStyle: 'dashed',
                   borderColor: theme.colors.border,
-                  gap: 10,
                 }
               : {
                   ...cardStyle,
                   paddingVertical: 12,
-                  paddingHorizontal: 15,
-                  gap: 10,
+                  paddingHorizontal: 14,
                 }
           }
         >
-          {}
           <View
             style={{
-              flexDirection: largeText ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: largeText ? 'stretch' : 'center',
-              flexGrow: 1,
-              gap: largeText ? 4 : 10,
+              flexDirection: 'row',
+              gap: 12,
+              alignItems: hasDetails || largeText ? 'flex-start' : 'center',
             }}
           >
-            <View
-              style={{
-                flex: largeText ? undefined : 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <Text
+            <TimeKindIcon rollover={isRollover} />
+            <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 6 }}>
+              <View
                 style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: isRollover ? theme.colors.textAlt : theme.colors.text,
-                  flexShrink: 1,
-                }}
-                numberOfLines={largeText ? undefined : 1}
-                ellipsizeMode='tail'
-              >
-                {dateLabel}
-              </Text>
-            </View>
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                alignSelf: largeText ? 'flex-end' : undefined,
-              }}
-              numberOfLines={1}
-            >
-              {isRollover
-                ? `${sign} ${formattedTime.formatted}`
-                : formattedTime.formatted}
-            </Text>
-          </View>
-          {isRollover && (
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 6,
-                alignItems: 'center',
-              }}
-            >
-              <IconButton icon={ArrowLeftRightIcon} />
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
+                  flexDirection: largeText ? 'column' : 'row',
+                  justifyContent: 'space-between',
+                  alignItems: largeText ? 'stretch' : 'center',
+                  gap: largeText ? 4 : 10,
                 }}
               >
-                {i18n.t('timeRollover_rowLabel')}
-              </Text>
-            </View>
-          )}
-          {!isRollover && (isLdc || categoryLabel || showsNote) && (
-            <View style={{ gap: 5 }}>
-              {(isLdc || categoryLabel) && (
-                <View
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    gap: 5,
-                    alignItems: 'center',
+                    fontFamily: theme.fonts.semiBold,
+                    color: isRollover
+                      ? theme.colors.textAlt
+                      : theme.colors.text,
+                    flex: largeText ? undefined : 1,
+                    flexShrink: 1,
                   }}
+                  numberOfLines={largeText ? undefined : 1}
+                  ellipsizeMode='tail'
                 >
-                  {isLdc && <IconButton icon={ConstructionIcon} />}
-                  <Text
-                    style={{
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {isLdc ? i18n.t('ldc') : categoryLabel}
-                  </Text>
-                  {(report.credit || isLdc) && <CreditBadge />}
-                </View>
-              )}
-              {showsNote && (
-                <RichNote
-                  note={report}
-                  nested
+                  {dateLabel}
+                </Text>
+                <Text
+                  style={{
+                    color: isRollover ? theme.colors.textAlt : readableAccent,
+                    fontFamily: isRollover
+                      ? theme.fonts.regular
+                      : theme.fonts.bold,
+                    fontSize: theme.fontSize('sm'),
+                    alignSelf: largeText ? 'flex-end' : undefined,
+                  }}
+                  numberOfLines={1}
+                >
+                  {isRollover
+                    ? `${sign} ${formattedTime.formatted}`
+                    : formattedTime.formatted}
+                </Text>
+              </View>
+              {isRollover && (
+                <Text
                   style={{
                     color: theme.colors.textAlt,
                     fontSize: theme.fontSize('sm'),
-                    lineHeight: 18,
                   }}
-                  onChange={(fields) =>
-                    updateServiceReport({
-                      ...report,
-                      date: storedDateToLocalDate(report.date),
-                      ...fields,
-                    })
-                  }
-                />
+                >
+                  {i18n.t('timeRollover_rowLabel')}
+                </Text>
+              )}
+              {!isRollover && (isLdc || categoryLabel || showsNote) && (
+                <View style={{ gap: 5 }}>
+                  {(isLdc || categoryLabel) && (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        gap: 5,
+                        alignItems: 'center',
+                      }}
+                    >
+                      {isLdc && <IconButton icon={ConstructionIcon} />}
+                      <Text
+                        style={{
+                          color: theme.colors.textAlt,
+                          fontSize: theme.fontSize('sm'),
+                        }}
+                      >
+                        {isLdc ? i18n.t('ldc') : categoryLabel}
+                      </Text>
+                      {(report.credit || isLdc) && <CreditBadge />}
+                    </View>
+                  )}
+                  {showsNote && (
+                    <RichNote
+                      note={report}
+                      nested
+                      style={{
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('sm'),
+                        lineHeight: 18,
+                      }}
+                      onChange={(fields) =>
+                        updateServiceReport({
+                          ...report,
+                          date: storedDateToLocalDate(report.date),
+                          ...fields,
+                        })
+                      }
+                    />
+                  )}
+                </View>
               )}
             </View>
-          )}
+          </View>
         </View>
       </ContextMenu>
     </SwipeableRow>

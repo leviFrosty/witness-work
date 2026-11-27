@@ -56,21 +56,17 @@ export const getPlanItemStartTime = (item: PlanListItem): number => {
 
 const PlanKindIcon = (props: { recurring: boolean }) => {
   const theme = useTheme()
-  const emphasizedOneTime = !props.recurring
 
   return (
     <View
       style={{
         width: 38,
         height: 38,
-        borderRadius: theme.numbers.borderRadiusMd,
+        borderRadius: 14,
+        borderCurve: 'continuous',
         borderWidth: 1,
-        borderColor: emphasizedOneTime
-          ? theme.colors.accent
-          : theme.colors.border,
-        backgroundColor: emphasizedOneTime
-          ? theme.colors.accentTranslucent
-          : theme.colors.backgroundLighter,
+        borderColor: theme.colors.border,
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -78,7 +74,7 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
       <LucideIcon
         icon={props.recurring ? RepeatIcon : Calendar1Icon}
         size={15}
-        color={emphasizedOneTime ? theme.colors.accent : theme.colors.textAlt}
+        color={theme.colors.textAlt}
       />
     </View>
   )
@@ -195,6 +191,9 @@ const PlanRow = (props: {
       : formatStartTime(effective.startTimeInMinutes)
   }`
   const longNote = showsNote && isLongNote(displayNote)
+  const hasBadges = hasCategory || isToday
+  const hasDetails =
+    !!plan.title || !!plan.location || showsNote || !!props.footer || hasBadges
 
   const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
     if (side !== 'trailing') return
@@ -210,7 +209,9 @@ const PlanRow = (props: {
         backgroundColor: theme.colors.background,
         borderRadius: cardStyle.borderRadius,
       }}
-      renderTrailingActions={() => <SwipeableDelete />}
+      renderTrailingActions={() => (
+        <SwipeableDelete size='xs' style={{ flexDirection: 'row' }} />
+      )}
       onSwipeableOpen={(side, swipeable) => handleSwipeOpen(side, swipeable)}
     >
       <ContextMenu
@@ -231,21 +232,30 @@ const PlanRow = (props: {
         <View
           testID={`plan-row-${plan.id}`}
           style={{
-            ...cardStyle,
+            borderRadius: cardStyle.borderRadius,
+            borderCurve: 'continuous',
+            backgroundColor: theme.colors.backgroundLighter,
+            borderWidth: 1.5,
+            borderStyle: 'dashed',
+            borderColor: theme.colors.border,
             paddingVertical: 12,
             paddingHorizontal: 14,
           }}
         >
           <View
-            style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}
+            style={{
+              flexDirection: 'row',
+              gap: 12,
+              alignItems: hasDetails ? 'flex-start' : 'center',
+            }}
           >
             <PlanKindIcon recurring={isRecurring} />
-            <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 8 }}>
+            <View style={{ flex: 1, flexShrink: 1, minWidth: 0, gap: 6 }}>
               <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: 10,
                 }}
               >
@@ -263,6 +273,7 @@ const PlanRow = (props: {
                 <Text
                   style={{
                     color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
                     fontSize: theme.fontSize('sm'),
                     maxWidth: '45%',
                     textAlign: alignText('end'),
@@ -302,10 +313,14 @@ const PlanRow = (props: {
 
               {props.footer}
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {hasCategory && <Badge size='xs'>{categoryLabel}</Badge>}
-                {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
-              </View>
+              {hasBadges ? (
+                <View
+                  style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
+                >
+                  {hasCategory && <Badge size='xs'>{categoryLabel}</Badge>}
+                  {isToday && <Badge size='xs'>{i18n.t('today')}</Badge>}
+                </View>
+              ) : null}
             </View>
           </View>
         </View>

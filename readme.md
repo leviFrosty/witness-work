@@ -17,12 +17,12 @@ Please consider donating if you have found WitnessWork helpful to you in your se
 [![Web](https://img.shields.io/badge/Web-2f9e44?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.witnesswork.app)
 
 <div float="left">
-<img src="./docs/screenshots/preview1.jpg" width="130">
-<img src="./docs/screenshots/preview2.jpg" width="130">
-<img src="./docs/screenshots/preview3.jpg" width="130">
-<img src="./docs/screenshots/preview4.jpg" width="130">
-<img src="./docs/screenshots/preview5.jpg" width="130">
-<img src="./docs/screenshots/preview6.jpg" width="130">
+<img src="./docs/screenshots/preview1.jpg" width="130" alt="Home — Your Ministry, All in One Place">
+<img src="./docs/screenshots/preview2.jpg" width="130" alt="Territories — Territories, Street by Street">
+<img src="./docs/screenshots/preview3.jpg" width="130" alt="Progress — Know Where You Stand">
+<img src="./docs/screenshots/preview4.jpg" width="130" alt="Scribe AI — Scribe AI Fills It In">
+<img src="./docs/screenshots/preview5.jpg" width="130" alt="Schedule — Plan Ahead With Ease">
+<img src="./docs/screenshots/preview6.jpg" width="130" alt="Contacts — Never Miss a Follow-Up">
 </div>
 
 ## Languages 🌐

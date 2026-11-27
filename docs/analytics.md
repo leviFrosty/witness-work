@@ -715,6 +715,21 @@ state, so volume stays near one per sign-in.
 
 No account ids, slot ids, request times, or app versions are sent.
 
+#### Data Protection Mode on other devices
+
+When Data Protection Mode is turned on or off on one device, the User's other
+syncing devices ask to follow (ADR 0068). These answer whether people follow
+the account's choice or keep a device out of it, and whether the door-record
+deletion stops them. A device sends at most one pair per change of the
+account's choice.
+
+| Event                             | Interpretation                                                                                                                                                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data_protection_follow_shown`    | The prompt opened. `change`: `on` or `off`, the account's new choice.                                                                                                                                                             |
+| `data_protection_follow_answered` | The User answered it. `change` as above; `outcome`: `followed` or `opted_out`; `step`: `prompt` (answered on the prompt) or `door_records` (said yes, then declined deleting house-by-house records, which keeps the device out). |
+
+No account ids, device names, or times are sent.
+
 ## Calendar Sync and notification badges
 
 Calendar Sync is available on iOS and Android. The onboarding `calendarSync` step

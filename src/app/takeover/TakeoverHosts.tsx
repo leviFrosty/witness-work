@@ -1,5 +1,6 @@
 import { type ComponentProps, useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
+import AccountDataProtectionPrompt from '@/app/data-protection/AccountDataProtectionPrompt'
 import BadgeCelebrationOverlay from '@/features/badges/components/BadgeCelebrationOverlay'
 import PetUnlockRevealHost from '@/features/pet/components/PetUnlockRevealHost'
 import PlanFinishedCelebrationHost from '@/features/routine/components/PlanFinishedCelebrationHost'
@@ -95,6 +96,7 @@ export default function TakeoverHosts({
       <BadgeCelebrationOverlay />
       <PetUnlockRevealHost />
       <PlanFinishedCelebrationHost />
+      <AccountDataProtectionPrompt />
     </>
   )
 }

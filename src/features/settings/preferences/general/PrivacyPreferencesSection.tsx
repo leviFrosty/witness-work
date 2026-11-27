@@ -19,23 +19,36 @@ import SettingsSearchTarget from '@/features/settings/components/search/Settings
 import { analytics } from '@/lib/analytics'
 import { useReplayOptInRequired } from '@/lib/sessionReplay/replayCountry'
 import { useTerritoryPrivacy } from '@/hooks/useTerritoryPrivacy'
-import confirmDestructive from '@/lib/confirmDestructive'
 import confirmDataProtectionOn from '@/lib/confirmDataProtectionOn'
+import { readAccountDataProtection } from '@/lib/dataProtectionAccount'
 import {
-  clearAllDoorRecords,
-  territoriesWithDoorRecords,
-} from '@/features/territories/lib/doorRecordPrivacy'
+  applyDataProtectionOn,
+  beforeDoorRecordsGo,
+  confirmDataProtectionOff,
+} from '@/app/data-protection/dataProtectionFlows'
 
 const PrivacyPreferencesSection = () => {
   const theme = useTheme()
   const {
     dataProtectionMode,
+    dataProtectionAccount,
     territoryPrivacyMode,
     analyticsEnabled,
     sessionReplayOptIn,
     crashReportsEnabled,
+    chooseDataProtectionMode,
     set,
   } = usePreferences()
+
+  const account = readAccountDataProtection(dataProtectionAccount)
+  const otherDevices =
+    account && account.on !== dataProtectionMode
+      ? i18n.t(
+          account.on
+            ? 'dataProtectionOtherDevicesOn'
+            : 'dataProtectionOtherDevicesOff'
+        )
+      : undefined
 
   const territoryPrivacy = useTerritoryPrivacy()
 
@@ -71,51 +84,10 @@ const PrivacyPreferencesSection = () => {
     )
   }
 
-  const beforeDoorRecordsGo = (apply: () => void, alsoTerritory = false) => {
-    const count = territoriesWithDoorRecords()
-    if (count === 0) return apply()
-    confirmDestructive({
-      title: i18n.t('territories.privacyConfirm_title'),
-      description: [
-        alsoTerritory && i18n.t('territories.privacyConfirm_alsoTerritory'),
-        i18n.t('territories.privacyConfirm_description', { count }),
-      ]
-        .filter(Boolean)
-        .join(' '),
-      confirmLabel: i18n.t('territories.privacyConfirm_action'),
-      onConfirm: () => {
-        apply()
-        clearAllDoorRecords()
-      },
-    })
-  }
-
   const handleDataProtectionToggle = (value: boolean) => {
-    if (value) {
-      const turnOn = () =>
-        set({ dataProtectionMode: true, dataProtectionModeSetByUser: true })
-      confirmDataProtectionOn(() => {
-        if (territoryPrivacyMode === null) beforeDoorRecordsGo(turnOn, true)
-        else turnOn()
-      })
-      return
-    }
-    Alert.alert(
-      i18n.t('dataProtectionTurnOffTitle'),
-      i18n.t('dataProtectionTurnOffDesc'),
-      [
-        { text: i18n.t('cancel'), style: 'cancel' },
-        {
-          text: i18n.t('dataProtectionTurnOffAction'),
-          style: 'destructive',
-          onPress: () =>
-            set({
-              dataProtectionMode: false,
-              dataProtectionModeSetByUser: true,
-            }),
-        },
-      ]
-    )
+    const apply = () => chooseDataProtectionMode(value)
+    if (value) confirmDataProtectionOn(() => applyDataProtectionOn(apply))
+    else confirmDataProtectionOff(apply)
   }
 
   return (
@@ -127,6 +99,7 @@ const PrivacyPreferencesSection = () => {
             <InputRowContainer
               leftIcon={ShieldCheckIcon}
               label={i18n.t('dataProtectionSwitchLabel')}
+              description={otherDevices}
               info={i18n.t('dataProtectionInfoDesc')}
               controlWidth='auto'
               style={{ justifyContent: 'space-between' }}

@@ -7,6 +7,7 @@ import {
 } from '@/stores/preferences'
 import { buildCalendarSnapshot } from '@/app/calendar/snapshot'
 import i18n from '@/lib/locales'
+import { keepsAccountDetailsPrivate } from '@/lib/dataProtectionAccount'
 import { addressToString } from '@/lib/address'
 import { reminderOccurrences } from '@/lib/reminderSchedule'
 
@@ -47,7 +48,7 @@ export function currentCalendarSnapshot({
     })),
     deletedContactIds: contacts.deletedContacts.map((contact) => contact.id),
     publishedKeys,
-    includeDetails: includeDetails && !preferences.dataProtectionMode,
+    includeDetails: includeDetails && !keepsAccountDetailsPrivate(preferences),
     alertMinutes,
     title: i18n.t('calendarFollowUpTitle'),
   })

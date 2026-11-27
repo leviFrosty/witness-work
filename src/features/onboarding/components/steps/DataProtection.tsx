@@ -24,8 +24,12 @@ interface Props {
 
 const DataProtection = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const { dataProtectionMode, dataProtectionModeSetByUser, set } =
-    usePreferences()
+  const {
+    dataProtectionMode,
+    dataProtectionModeSetByUser,
+    chooseDataProtectionMode,
+    set,
+  } = usePreferences()
 
   useEffect(() => {
     if (dataProtectionModeSetByUser) return
@@ -123,11 +127,7 @@ const DataProtection = ({ goBack, goNext }: Props) => {
                 accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
                 value={dataProtectionMode}
                 onValueChange={(value) => {
-                  const apply = () =>
-                    set({
-                      dataProtectionMode: value,
-                      dataProtectionModeSetByUser: true,
-                    })
+                  const apply = () => chooseDataProtectionMode(value)
                   if (value) confirmDataProtectionOn(apply)
                   else apply()
                 }}

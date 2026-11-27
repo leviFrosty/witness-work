@@ -307,6 +307,9 @@ export const analyticsEventNames = [
   'cloud_sync_web_gate_state',
   'cloud_sync_web_gate_action',
 
+  'data_protection_follow_shown',
+  'data_protection_follow_answered',
+
   'icloud_account_changed',
   'icloud_restore_images_prompted',
   'icloud_restore_images_requested',

@@ -12,19 +12,14 @@ import {
   type Hemisphere,
   type Season,
 } from '@/features/settings/lib/hemisphere'
-import { usePreferences, type AppIconVariant } from '@/stores/preferences'
+import { isAlternateAppIcon } from '@/features/settings/lib/appIconCatalog'
+import {
+  usePreferences,
+  type AlternateAppIconName,
+  type AppIconVariant,
+} from '@/stores/preferences'
 
-type PluginIconName =
-  | 'Gold'
-  | 'Dark'
-  | 'Minimalist'
-  | 'Mono'
-  | 'SeasonalSpring'
-  | 'SeasonalSummer'
-  | 'SeasonalFall'
-  | 'SeasonalWinter'
-
-const SEASON_TO_PLUGIN: Record<Season, PluginIconName> = {
+export const SEASON_ICONS: Record<Season, AlternateAppIconName> = {
   spring: 'SeasonalSpring',
   summer: 'SeasonalSummer',
   fall: 'SeasonalFall',
@@ -49,15 +44,15 @@ export const resolvePluginIcon = (
   variant: AppIconVariant | null,
   hemisphere: Hemisphere,
   now: Date = new Date()
-): PluginIconName | null => {
+): AlternateAppIconName | null => {
   if (!variant || variant === 'Default') return null
-  if (variant === 'Seasonal')
-    return SEASON_TO_PLUGIN[seasonFor(now, hemisphere)]
-  return variant
+  if (variant === 'Seasonal') return SEASON_ICONS[seasonFor(now, hemisphere)]
+
+  return isAlternateAppIcon(variant) ? variant : null
 }
 
 export const applyAppIcon = async (
-  target: PluginIconName | null
+  target: AlternateAppIconName | null
 ): Promise<void> => {
   if (!supportsAlternateIcons) return
   const current = getAppIconName()

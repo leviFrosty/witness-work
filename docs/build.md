@@ -73,6 +73,27 @@ synonyms are the `siriSpokenDuration*` strings. To try an action, run it from th
 Shortcuts app on the simulator, or say a phrase on a device. New phrases can
 take a minute to reach Siri after installing.
 
+### Alternate app icons
+
+Supporters pick a Home Screen icon in Preferences → App Icon (iOS only).
+Every icon is drawn in code: `scripts/app-icons/designs.mjs` builds each one as
+an SVG from the shared brand mark in `mark.mjs`. The Pets icons use the pet
+Companion's own sprites, which `pets.mjs` loads from `src/features/pet/art`
+with `jiti`; regenerate them when the sprites change.
+`node scripts/app-icons/generate.mjs [Name…] [--sheet out.png]` renders the
+icons with `sharp`. It writes a 1024×1024 opaque PNG per icon to `src/assets/icons`
+and a small copy to `src/assets/icons/previews` for the picker; `--sheet` also
+saves a contact sheet of the results for review.
+
+`app.config.ts` registers every PNG in `src/assets/icons` with iOS, named after
+its file, so a new icon is a native change. To add one, add its design, its
+name to `AlternateAppIconName` (`src/stores/preferences.ts`), an entry in
+`appIconCatalog.ts` and `appIconPreviews.ts`, and an `appIcon…` label;
+`appIconCatalog.test.ts` checks the catalog against the files. Saved choices
+sync between devices, so never rename an icon; a name this version doesn't
+know falls back to the default icon. Keep icons free of cross-like shapes,
+including four-point sparkles, and of holiday or national symbols.
+
 ## Android development
 
 Install Android Studio with an emulator, Android SDK Platform 36, and JDK 17.

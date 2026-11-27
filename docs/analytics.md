@@ -995,6 +995,16 @@ of this preference with `order` (comma-separated bounded route names, including
 Progress and Territories even when hidden) and `source` (`drag` on iOS, `buttons` on Android and the web). Generic menu and
 navigation interactions remain removed.
 
+## App icons
+
+Supporters pick a Home Screen icon in Preferences → App Icon (iOS only).
+`app_icon_changed` answers which icons and groups people choose, so new icons
+follow what's popular. It is sent once per successful change, which is rare.
+
+| Event              | When                                    | Properties                                                                                                                            |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `app_icon_changed` | The Home Screen icon changed to a pick. | `icon`: the chosen icon (`Default`, `Seasonal`, or an icon name); `group: classic \| colors \| pets \| scenes \| seasons \| playful`. |
+
 ## Progress cards
 
 Progress → Month shows the month's report, then cards the User picks: Daily

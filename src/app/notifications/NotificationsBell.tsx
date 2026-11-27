@@ -35,6 +35,7 @@ import useSupporterNotifications from '@/features/supporter/hooks/useSupporterNo
 import useWhatsNewNotification from '@/features/updates/hooks/useWhatsNewNotification'
 import usePendingUpdateNotification from '@/features/updates/hooks/usePendingUpdateNotification'
 import useUpdateRevealNotification from '@/features/updates/hooks/useUpdateRevealNotification'
+import useAutoRescheduledFollowUpNotifications from '@/features/visits/hooks/useAutoRescheduledFollowUpNotifications'
 import useMissedFollowUpNotifications from '@/features/visits/hooks/useMissedFollowUpNotifications'
 
 export default function NotificationsBell() {
@@ -57,6 +58,7 @@ export default function NotificationsBell() {
     useCalendarSyncPausedNotification(now),
     useDataProtectionRetentionNotification(now),
     ...useReminderNotifications(now),
+    ...useAutoRescheduledFollowUpNotifications(now),
     ...useMissedFollowUpNotifications(now),
     ...useBadgeNotifications(now),
     ...usePetUnlockNotifications(),

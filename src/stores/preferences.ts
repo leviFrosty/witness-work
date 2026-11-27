@@ -91,7 +91,20 @@ import {
   standingRole,
   type RoleHistory,
 } from '@/lib/roleHistory'
+import {
+  DEFAULT_AUTO_RESCHEDULE_GRACE,
+  DEFAULT_AUTO_RESCHEDULE_MAX_COUNT,
+  DEFAULT_AUTO_RESCHEDULE_OFFSET,
+  type AutoRescheduleGrace,
+} from '@/lib/autoRescheduleFollowUps'
 import { PASSKEY_PROMPT_INITIAL } from '@/lib/passkeys/promptRules'
+
+export {
+  DEFAULT_AUTO_RESCHEDULE_GRACE,
+  DEFAULT_AUTO_RESCHEDULE_MAX_COUNT,
+  DEFAULT_AUTO_RESCHEDULE_OFFSET,
+  type AutoRescheduleGrace,
+}
 
 export type { MarkerColors }
 
@@ -367,6 +380,12 @@ export const PREFERENCE_DEFAULTS = {
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
+
+  autoRescheduleMissedFollowUps: false,
+  autoRescheduleOffset: null as TimeOffset | null,
+  autoRescheduleGrace: DEFAULT_AUTO_RESCHEDULE_GRACE as AutoRescheduleGrace,
+  autoRescheduleMaxCount: DEFAULT_AUTO_RESCHEDULE_MAX_COUNT as number | null,
+  autoRescheduleEnabledAt: null as number | null,
 
   planNotificationOffset: null as TimeOffset | null,
 

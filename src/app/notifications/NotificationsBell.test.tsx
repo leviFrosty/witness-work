@@ -212,3 +212,91 @@ it('offers to restart into a downloaded update until the app runs it', async () 
   await act(async () => usePendingUpdate.setState({ bundleId: null }))
   expect(pending()).toBeUndefined()
 })
+
+it('shows auto-rescheduled follow-ups only when opted in and supports undo', async () => {
+  const fromDate = new Date(Date.now() - 24 * HOUR)
+  const nextDate = new Date(Date.now() + 6 * 24 * HOUR)
+  usePreferences.getState().set({
+    autoRescheduleMissedFollowUps: false,
+    autoRescheduleMaxCount: 2,
+  })
+  useConversations.setState({
+    conversations: [
+      {
+        id: 'v-auto',
+        contact: { id: 'c1' },
+        date: new Date(Date.now() - 7 * 24 * HOUR),
+        isBibleStudy: false,
+        followUp: {
+          date: nextDate,
+          notifyMe: false,
+          autoRescheduledFrom: fromDate,
+          autoRescheduledAt: Date.now() - 1000,
+          autoRescheduleCount: 1,
+        },
+      },
+    ],
+  })
+
+  await act(async () => {
+    renderer = create(<NotificationsBell />)
+  })
+
+  const autoItems = () =>
+    tray.items.filter((item) => item.kind === 'auto_rescheduled_follow_up')
+  expect(autoItems()).toHaveLength(0)
+
+  await act(async () => {
+    usePreferences.getState().set({ autoRescheduleMissedFollowUps: true })
+  })
+  expect(autoItems()).toHaveLength(1)
+  expect(autoItems()[0]?.actions?.map((a) => a.id)).toEqual([
+    'log_visit',
+    'change',
+    'undo',
+  ])
+
+  const undo = autoItems()[0]?.actions?.find((a) => a.id === 'undo')
+  await act(async () => {
+    undo?.onPress()
+  })
+  const updated = useConversations
+    .getState()
+    .conversations.find((v) => v.id === 'v-auto')
+  expect(updated?.followUp?.date).toEqual(fromDate)
+  expect(updated?.followUp?.autoRescheduleSkippedAt).toBe(fromDate.getTime())
+  expect(autoItems()).toHaveLength(0)
+})
+
+it('shows paused copy on missed follow-ups that reached the auto-reschedule cap', async () => {
+  usePreferences.getState().set({
+    autoRescheduleMissedFollowUps: true,
+    autoRescheduleMaxCount: 2,
+  })
+  useConversations.setState({
+    conversations: [
+      {
+        id: 'v-paused',
+        contact: { id: 'c1' },
+        date: new Date(Date.now() - 21 * 24 * HOUR),
+        isBibleStudy: false,
+        followUp: {
+          date: new Date(Date.now() - 24 * HOUR),
+          notifyMe: false,
+          autoRescheduleCount: 2,
+        },
+      },
+    ],
+  })
+
+  await act(async () => {
+    renderer = create(<NotificationsBell />)
+  })
+
+  expect(missed()).toHaveLength(1)
+  expect(missed()[0]?.title).toContain('Paused auto-reschedule')
+  expect(missed()[0]?.actions?.map((a) => a.id)).toEqual([
+    'reschedule',
+    'dismiss_follow_up',
+  ])
+})

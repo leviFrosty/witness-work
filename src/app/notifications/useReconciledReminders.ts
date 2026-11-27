@@ -233,6 +233,15 @@ export function useReconciledReminders(ready: boolean | undefined) {
             monthReport: monthReportSources(records, prefs),
             weekPlan: weekPlanSources(records, prefs),
             routine: routineSourcesFor(prefs),
+            autoReschedule: prefs.autoRescheduleMissedFollowUps
+              ? {
+                  enabled: true,
+                  offset: prefs.autoRescheduleOffset,
+                  grace: prefs.autoRescheduleGrace,
+                  maxCount: prefs.autoRescheduleMaxCount,
+                  enabledAt: prefs.autoRescheduleEnabledAt,
+                }
+              : undefined,
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -421,6 +430,11 @@ export function useReconciledReminders(ready: boolean | undefined) {
       if (
         state.returnVisitNotificationOffset !==
           previous.returnVisitNotificationOffset ||
+        state.autoRescheduleMissedFollowUps !==
+          previous.autoRescheduleMissedFollowUps ||
+        state.autoRescheduleOffset !== previous.autoRescheduleOffset ||
+        state.autoRescheduleGrace !== previous.autoRescheduleGrace ||
+        state.autoRescheduleMaxCount !== previous.autoRescheduleMaxCount ||
         state.planNotificationOffset !== previous.planNotificationOffset ||
         state.unloggedDayReminders !== previous.unloggedDayReminders ||
         state.unloggedDayReminderTime !== previous.unloggedDayReminderTime ||

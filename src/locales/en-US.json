@@ -800,6 +800,38 @@
   "nextVisitOffset_description": "How far out your next visit should be from when you create a conversation.",
   "conversations": "Conversations",
   "followUpOffset": "Default Follow Up",
+  "autoRescheduleMissed": "Auto-reschedule",
+  "autoRescheduleMissed_info": "Automatically moves missed follow-ups forward at the same time of day. Follow-ups shared with buddies are always rescheduled manually.",
+  "autoRescheduleBy": "Reschedule by",
+  "autoRescheduleGrace": "Move after",
+  "autoRescheduleGrace_4hours": "4 hours",
+  "autoRescheduleGrace_nextMorning": "Next morning",
+  "autoRescheduleGrace_24hours": "24 hours",
+  "autoRescheduleStopAfter": "Stop after",
+  "autoRescheduleStopAfter_times": {
+    "one": "{{count}} time",
+    "other": "{{count}} times"
+  },
+  "autoRescheduleStopAfter_never": "Never",
+  "autoRescheduleVisitToggle": "Auto-reschedule if missed",
+  "autoRescheduleVisitToggle_description": "Moves forward by {{offset}} at the same time.",
+  "autoRescheduleDuration_days": {
+    "one": "{{count}} day",
+    "other": "{{count}} days"
+  },
+  "autoRescheduleDuration_weeks": {
+    "one": "{{count}} week",
+    "other": "{{count}} weeks"
+  },
+  "autoRescheduleVisitBuddiesNote": "Shared with buddies — reschedule manually so plans stay in sync.",
+  "autoRescheduledFrom": "Auto-rescheduled from {{date}}",
+  "autoRescheduledFromCount": "Auto-rescheduled from {{date}} ({{count}} of {{max}})",
+  "autoReschedulePausedNote": {
+    "one": "Auto-reschedule paused after {{count}} miss",
+    "other": "Auto-reschedule paused after {{count}} misses"
+  },
+  "autoRescheduleUndone": "Restored {{name}} to {{date}}",
+  "autoRescheduleChange": "Change",
   "notificationOffset_description": "How much time before your next visit when the notification arrives.",
   "plan_reminder_title": "Upcoming Service Plan",
   "planNotificationOffset_description": "How much time before your plan starts when the notification arrives.",
@@ -1615,6 +1647,14 @@
   "notifications_alreadySubmitted": "Already Submitted",
   "notifications_review": "Review",
   "notifications_missedFollowUp": "Missed conversation with {{name}}",
+  "notifications_autoRescheduledFollowUp": "Rescheduled {{name}} to {{when}}",
+  "notifications_autoRescheduledFollowUp_desc": "Missed {{from}} · Auto-rescheduled",
+  "notifications_autoRescheduledFollowUp_descCount": "Missed {{from}} · Auto-rescheduled ({{count}} of {{max}})",
+  "notifications_autoReschedulePaused": "Paused auto-reschedule for {{name}}",
+  "notifications_autoReschedulePaused_desc": {
+    "one": "Missed {{count}} time · Still planning to visit?",
+    "other": "Missed {{count}} times · Still planning to visit?"
+  },
   "notifications_reminderFollowUp": "Follow-up with {{name}} at {{time}}",
   "notifications_reminderPlan": "Service plan at {{time}}",
   "buddies_notifPaired": "You and {{name}} are buddies now",

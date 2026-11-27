@@ -40,6 +40,11 @@ import {
   type RoutineReminderSources,
 } from '@/lib/routine/reminderSchedule'
 import type { RoutineHabit, WorshipKind } from '@/types/routine'
+import {
+  contingentNextFollowUpDate,
+  type AutoRescheduleSettings,
+} from '@/lib/autoRescheduleFollowUps'
+import { visitsByContact } from '@/lib/conversations'
 
 export type LocalReminder = {
   id: string
@@ -75,6 +80,8 @@ export type LocalReminder = {
   habits?: RoutineHabit[]
 
   worshipKind?: WorshipKind
+
+  contingent?: true
 }
 
 export const reminderRequestId = (
@@ -199,15 +206,21 @@ type ReminderSources = {
   weekPlan?: WeekPlanSources
 
   routine?: RoutineReminderSources & { worshipKind?: WorshipKind }
+
+  autoReschedule?: AutoRescheduleSettings
 }
 
 export function reminderOccurrences(
   args: ReminderSources & { now?: number }
 ): LocalReminder[] {
   const reminders: LocalReminder[] = []
+  const nowMs = args.now ?? Date.now()
   const contacts = new Map(
     args.contacts.map((contact) => [contact.id, contact])
   )
+  const visitsGrouped = args.autoReschedule?.enabled
+    ? visitsByContact(args.visits)
+    : null
   for (const visit of args.visits) {
     const followUp = visit.followUp
     const contact = contacts.get(visit.contact.id)
@@ -223,6 +236,30 @@ export function reminderOccurrences(
       name: contact.name,
       note: followUp.topic,
     })
+    if (args.autoReschedule?.enabled && visitsGrouped) {
+      const nextAnchor = contingentNextFollowUpDate({
+        visit,
+        contactVisits: visitsGrouped.get(visit.contact.id) ?? [],
+        settings: args.autoReschedule,
+        now: new Date(nowMs),
+      })
+      if (nextAnchor) {
+        const nextFire = reminderDate(nextAnchor, followUp, args.visitOffset)
+        if (nextFire.getTime() <= nowMs + RECURRING_PLAN_REMINDER_HORIZON_MS) {
+          reminders.push({
+            id: reminderRequestId('visit', `${visit.id}-next`),
+            date: nextFire,
+            kind: 'visit',
+            targetId: visit.id,
+            contactId: contact.id,
+            anchor: nextAnchor,
+            name: contact.name,
+            note: followUp.topic,
+            contingent: true,
+          })
+        }
+      }
+    }
   }
   for (const plan of args.plans) {
     if (!plan.notifyMe) continue

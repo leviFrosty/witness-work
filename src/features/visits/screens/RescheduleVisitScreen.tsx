@@ -41,6 +41,7 @@ import {
   savedReminderOffsetMinutes,
 } from '@/lib/reminderSchedule'
 import { offsetToMinutes, reminderFireDate } from '@/lib/notificationOffset'
+import { clearAutoRescheduleMetadata } from '@/lib/autoRescheduleFollowUps'
 import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
@@ -323,7 +324,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     updateConversation({
       ...conversation,
       followUp: {
-        ...followUp,
+        ...clearAutoRescheduleMetadata(followUp),
         date: newDate,
         reminderOffsetMinutes: offsetMinutes ?? undefined,
 

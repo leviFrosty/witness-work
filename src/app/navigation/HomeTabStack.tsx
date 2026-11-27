@@ -20,6 +20,7 @@ import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import { logger } from '@/lib/logger'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import useICloudPullSettled from '@/hooks/useICloudPullSettled'
+import useAutoRescheduleFollowUps from '@/app/visits/useAutoRescheduleFollowUps'
 import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
 import { isLaunchRevealArmed } from '@/features/updates/lib/devLaunchReveal'
 import {
@@ -175,6 +176,7 @@ const HomeTabStack = () => {
   const autoRolloverEnabled = usePreferences((s) => s.autoRolloverEnabled)
 
   const iCloudSettled = useICloudPullSettled()
+  useAutoRescheduleFollowUps(iCloudSettled)
 
   const rolloverHandledRef = useRef(false)
   useEffect(() => {

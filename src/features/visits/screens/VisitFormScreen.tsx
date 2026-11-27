@@ -61,6 +61,11 @@ import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import useOpenContact from '@/hooks/useOpenContact'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
+import {
+  clearAutoRescheduleMetadata,
+  hasFollowUpBuddies,
+  resolveAutoRescheduleOffset,
+} from '@/lib/autoRescheduleFollowUps'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { useReloadState } from '@/lib/reloadRestore'
@@ -176,6 +181,8 @@ const VisitFormScreen = ({
     returnVisitTimeOffset,
     returnVisitNotificationOffset,
     returnVisitAlwaysNotify,
+    autoRescheduleMissedFollowUps,
+    autoRescheduleOffset,
     dataProtectionMode,
   } = usePreferences()
   const { params } = route
@@ -285,6 +292,35 @@ const VisitFormScreen = ({
           ...(conversationToUpdate.followUp?.buddies?.length
             ? { buddies: conversationToUpdate.followUp.buddies }
             : {}),
+          ...(conversationToUpdate.followUp?.autoReschedule !== undefined
+            ? { autoReschedule: conversationToUpdate.followUp.autoReschedule }
+            : {}),
+          ...(conversationToUpdate.followUp?.autoRescheduledFrom
+            ? {
+                autoRescheduledFrom: new Date(
+                  conversationToUpdate.followUp.autoRescheduledFrom
+                ),
+              }
+            : {}),
+          ...(conversationToUpdate.followUp?.autoRescheduledAt !== undefined
+            ? {
+                autoRescheduledAt:
+                  conversationToUpdate.followUp.autoRescheduledAt,
+              }
+            : {}),
+          ...(conversationToUpdate.followUp?.autoRescheduleCount !== undefined
+            ? {
+                autoRescheduleCount:
+                  conversationToUpdate.followUp.autoRescheduleCount,
+              }
+            : {}),
+          ...(conversationToUpdate.followUp?.autoRescheduleSkippedAt !==
+          undefined
+            ? {
+                autoRescheduleSkippedAt:
+                  conversationToUpdate.followUp.autoRescheduleSkippedAt,
+              }
+            : {}),
         },
         note: conversationToUpdate.note,
         noteDoc: conversationToUpdate.noteDoc,
@@ -377,7 +413,7 @@ const VisitFormScreen = ({
     setConversation({
       ...conversation,
       followUp: conversation.followUp && {
-        ...conversation.followUp,
+        ...clearAutoRescheduleMetadata(conversation.followUp),
         date,
       },
     })
@@ -769,9 +805,43 @@ const VisitFormScreen = ({
                   notifyMeOffset={notifyMeOffset}
                   setConversation={setConversation}
                   setNotifyMeOffset={setNotifyMeOffset}
-                  lastInSection
+                  lastInSection={!autoRescheduleMissedFollowUps}
                 />
               )}
+              {autoRescheduleMissedFollowUps &&
+                (hasFollowUpBuddies(conversation.followUp) ? (
+                  <InputRowContainer
+                    label={i18n.t('autoRescheduleVisitToggle')}
+                    description={i18n.t('autoRescheduleVisitBuddiesNote')}
+                    lastInSection
+                  />
+                ) : (
+                  <InputRowSwitch
+                    label={i18n.t('autoRescheduleVisitToggle')}
+                    description={(() => {
+                      const resolved =
+                        resolveAutoRescheduleOffset(autoRescheduleOffset)
+                      const durationKey =
+                        resolved.unit === 'days'
+                          ? 'autoRescheduleDuration_days'
+                          : 'autoRescheduleDuration_weeks'
+                      return i18n.t('autoRescheduleVisitToggle_description', {
+                        offset: i18n.t(durationKey, { count: resolved.amount }),
+                      })
+                    })()}
+                    value={conversation.followUp?.autoReschedule !== false}
+                    onValueChange={(enabled) =>
+                      setConversation({
+                        ...conversation,
+                        followUp: conversation.followUp && {
+                          ...conversation.followUp,
+                          autoReschedule: enabled ? undefined : false,
+                        },
+                      })
+                    }
+                    lastInSection
+                  />
+                ))}
             </>
           )}
         </Section>

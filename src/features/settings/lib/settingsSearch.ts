@@ -502,6 +502,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'autoFillAddressFromLastContact',
     page: 'PreferencesConversation',
   },
+  {
+    id: 'autoRescheduleMissedFollowUps',
+    title: 'autoRescheduleMissed',
+    page: 'PreferencesConversation',
+    keywords: 'settingsSearch.keywords.followUp',
+  },
 
   page('PreferencesPlans'),
   {

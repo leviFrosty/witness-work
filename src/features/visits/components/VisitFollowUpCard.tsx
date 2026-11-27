@@ -9,6 +9,7 @@ import {
   Check as CheckIcon,
   DoorClosed as DoorClosedIcon,
   Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
   TriangleAlert as TriangleAlertIcon,
   X as XIcon,
 } from 'lucide-react-native'
@@ -27,7 +28,8 @@ import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { actionForeground } from '@/hooks/useContactActionColor'
-import { formatRelative, formatTime } from '@/lib/dates'
+import { formatMonthDayCompact, formatRelative, formatTime } from '@/lib/dates'
+import { isAutoReschedulePaused } from '@/lib/autoRescheduleFollowUps'
 import i18n from '@/lib/locales'
 import { offsetToMinutes } from '@/lib/notificationOffset'
 import { savedReminderOffsetMinutes } from '@/lib/reminderSchedule'
@@ -87,6 +89,10 @@ export default function VisitFollowUpCard({
   const theme = useTheme()
   const largeText = useAccessibilityTextSize()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  const autoRescheduleEnabled = usePreferences(
+    (s) => s.autoRescheduleMissedFollowUps
+  )
+  const autoRescheduleMaxCount = usePreferences((s) => s.autoRescheduleMaxCount)
   const returnVisitNotificationOffset = usePreferences(
     (s) => s.returnVisitNotificationOffset
   )
@@ -374,6 +380,64 @@ export default function VisitFollowUpCard({
               i18n.t('contactDetails.attempted', {
                 when: formatRelative(answer.date),
               })
+            )}
+          {status === 'upcoming' && followUp.autoRescheduledFrom && (
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            >
+              <LucideIcon
+                icon={RefreshCwIcon}
+                size={12}
+                color={theme.colors.accent}
+              />
+              <Text
+                style={{
+                  flexShrink: 1,
+                  fontSize: theme.fontSize('xs') + 1,
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.accent,
+                }}
+              >
+                {autoRescheduleMaxCount !== null && followUp.autoRescheduleCount
+                  ? i18n.t('autoRescheduledFromCount', {
+                      date: formatMonthDayCompact(
+                        moment(followUp.autoRescheduledFrom)
+                      ),
+                      count: followUp.autoRescheduleCount,
+                      max: autoRescheduleMaxCount,
+                    })
+                  : i18n.t('autoRescheduledFrom', {
+                      date: formatMonthDayCompact(
+                        moment(followUp.autoRescheduledFrom)
+                      ),
+                    })}
+              </Text>
+            </View>
+          )}
+          {status === 'overdue' &&
+            autoRescheduleEnabled &&
+            isAutoReschedulePaused(visit, autoRescheduleMaxCount) && (
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              >
+                <LucideIcon
+                  icon={RefreshCwIcon}
+                  size={12}
+                  color={theme.colors.warnText}
+                />
+                <Text
+                  style={{
+                    flexShrink: 1,
+                    fontSize: theme.fontSize('xs') + 1,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.warnText,
+                  }}
+                >
+                  {i18n.t('autoReschedulePausedNote', {
+                    count: followUp.autoRescheduleCount ?? 0,
+                  })}
+                </Text>
+              </View>
             )}
           {status === 'upcoming' &&
             followUp.notifyMe &&

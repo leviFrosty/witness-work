@@ -321,7 +321,11 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
               <BuddyPlansForDay date={date} onNavigate={onNavigate} />
             </>
           )}
-          renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
+          renderDayPlanFooter={(plan) =>
+            plan.buddyShare || plan.buddies?.length ? (
+              <PlanBuddiesLine plan={plan} />
+            ) : null
+          }
         />
       )}
       {goalMonth ? (

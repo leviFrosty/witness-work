@@ -4,6 +4,7 @@ import {
   Plus as PlusIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import ScheduleSwatch from '@/components/ui/ScheduleSwatch'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
@@ -234,17 +235,20 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       <View style={{ gap: 8 }}>
         {}
         <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-          <Text
-            style={{
-              flexShrink: 1,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              textTransform: 'uppercase',
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t('timeReports')}
-          </Text>
+          <XView style={{ gap: 6, flexShrink: 1 }}>
+            <ScheduleSwatch />
+            <Text
+              style={{
+                flexShrink: 1,
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+                textTransform: 'uppercase',
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('timeReports')}
+            </Text>
+          </XView>
           {hasTimeReports && onAddTime && (
             <IconButton
               noTransform
@@ -335,17 +339,20 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
 
       <View style={{ gap: 8 }}>
         <XView style={{ justifyContent: 'space-between', gap: 12 }}>
-          <Text
-            style={{
-              flexShrink: 1,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              textTransform: 'uppercase',
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t('plans')}
-          </Text>
+          <XView style={{ gap: 6, flexShrink: 1 }}>
+            <ScheduleSwatch striped />
+            <Text
+              style={{
+                flexShrink: 1,
+                fontFamily: theme.fonts.semiBold,
+                color: theme.colors.textAlt,
+                textTransform: 'uppercase',
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {i18n.t('plans')}
+            </Text>
+          </XView>
           {hasPlans && onPlanDay && (
             <IconButton
               noTransform

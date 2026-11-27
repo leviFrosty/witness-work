@@ -3,7 +3,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
-import StripedFill from '@/components/ui/StripedFill'
+import ScheduleSwatch from '@/components/ui/ScheduleSwatch'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
@@ -165,7 +165,7 @@ export default function GoalMeterCard({
             flexShrink: 1,
           }}
         >
-          <Swatch striped={tense !== 'past'} />
+          <ScheduleSwatch striped={tense !== 'past'} />
           <Text
             numberOfLines={oneLine}
             style={{
@@ -202,7 +202,7 @@ export default function GoalMeterCard({
             flexShrink: 1,
           }}
         >
-          <Swatch />
+          <ScheduleSwatch />
           <Text
             numberOfLines={oneLine}
             style={{
@@ -267,26 +267,5 @@ export default function GoalMeterCard({
     >
       {card}
     </ContextMenu>
-  )
-}
-
-function Swatch({ striped = false }: { striped?: boolean }) {
-  const theme = useTheme()
-  return (
-    <View
-      style={{
-        width: 12,
-        height: 6,
-        borderRadius: 3,
-        overflow: 'hidden',
-        backgroundColor: striped
-          ? theme.colors.background
-          : theme.colors.accent,
-      }}
-    >
-      {striped && (
-        <StripedFill color={theme.colors.accent} size={4} strokeWidth={1.5} />
-      )}
-    </View>
   )
 }

@@ -30,7 +30,11 @@ export default function ScheduleDayInspector({
         }
         onAddTime={() => navigation.navigate('Add Time', { date: dateString })}
         onPlanDay={() => navigation.navigate('PlanDay', { date: dateString })}
-        renderDayPlanFooter={(plan) => <PlanBuddiesLine plan={plan} />}
+        renderDayPlanFooter={(plan) =>
+          plan.buddyShare || plan.buddies?.length ? (
+            <PlanBuddiesLine plan={plan} />
+          ) : null
+        }
       />
       <TodayRouteEntry date={date} surface='schedule_inspector' />
       <BuddyPlansForDay date={date} onNavigate={(go) => go()} />

@@ -79,6 +79,16 @@ const CAMERA_PERMISSION = enUS.cameraPermissionPurpose
 
 const MICROPHONE_PERMISSION = enUS.microphonePermissionPurpose
 
+const ALTERNATE_APP_ICONS = readdirSync(
+  path.join(__dirname, 'src', 'assets', 'icons')
+)
+  .filter((file) => file.endsWith('.png'))
+  .sort()
+  .map((file) => ({
+    name: file.slice(0, -'.png'.length),
+    ios: `./src/assets/icons/${file}`,
+  }))
+
 const APP_LANGUAGES = readdirSync(path.join(__dirname, 'src', 'locales'))
   .filter((file) => file.endsWith('.json'))
   .map((file) => {
@@ -258,28 +268,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             'YOUR_GOOGLE_MAPS_ANDROID_API_KEY',
         },
       ],
-      [
-        'expo-alternate-app-icons',
-        [
-          { name: 'Gold', ios: './src/assets/icons/Gold.png' },
-          { name: 'Dark', ios: './src/assets/icons/Dark.png' },
-          { name: 'Minimalist', ios: './src/assets/icons/Minimalist.png' },
-          { name: 'Mono', ios: './src/assets/icons/Mono.png' },
-          {
-            name: 'SeasonalSpring',
-            ios: './src/assets/icons/SeasonalSpring.png',
-          },
-          {
-            name: 'SeasonalSummer',
-            ios: './src/assets/icons/SeasonalSummer.png',
-          },
-          { name: 'SeasonalFall', ios: './src/assets/icons/SeasonalFall.png' },
-          {
-            name: 'SeasonalWinter',
-            ios: './src/assets/icons/SeasonalWinter.png',
-          },
-        ],
-      ],
+      ['expo-alternate-app-icons', ALTERNATE_APP_ICONS],
       'expo-asset',
       'expo-background-task',
 

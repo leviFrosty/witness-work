@@ -220,13 +220,43 @@ export type PrefillAddress = {
   lastUpdated?: Date
 }
 
-export type AppIconVariant =
-  | 'Default'
-  | 'Gold'
+export type AppIconVariant = 'Default' | 'Seasonal' | AlternateAppIconName
+
+export type AlternateAppIconName =
   | 'Dark'
-  | 'Minimalist'
+  | 'Gold'
   | 'Mono'
-  | 'Seasonal'
+  | 'Minimalist'
+  | 'Cherry'
+  | 'Tangerine'
+  | 'Lemon'
+  | 'Lagoon'
+  | 'Sky'
+  | 'Blueberry'
+  | 'Grape'
+  | 'Bubblegum'
+  | 'Paradise'
+  | 'Sunrise'
+  | 'Ocean'
+  | 'Mountains'
+  | 'NightSky'
+  | 'Aurora'
+  | 'SeasonalSpring'
+  | 'SeasonalSummer'
+  | 'SeasonalFall'
+  | 'SeasonalWinter'
+  | 'PetLion'
+  | 'PetDog'
+  | 'PetCat'
+  | 'PetDonkey'
+  | 'PetLamb'
+  | 'PetLionAndLamb'
+  | 'Neon'
+  | 'Glass'
+  | 'Pixel'
+  | 'Blueprint'
+  | 'Retro'
+  | 'Sticker'
 
 export type HomeScreenElementKey =
   | 'checklist'

@@ -265,6 +265,7 @@ export const analyticsEventNames = [
   'siri_action_completed',
   'siri_action_failed',
   'tab_order_changed',
+  'app_icon_changed',
   'update_reveal_closed',
   'update_reveal_opened',
 

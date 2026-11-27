@@ -94,7 +94,7 @@ function YouRow({
   last: boolean
 }) {
   const theme = useTheme()
-  const { avatar, customAvatarBackground } = useProfile()
+  const avatar = useProfile((state) => state.avatar)
   const name = useBuddiesCardName()
   const answer = status === 'pending' ? undefined : status
   return (
@@ -105,12 +105,7 @@ function YouRow({
         borderColor: theme.colors.border,
       }}
     >
-      <Avatar
-        avatar={avatar}
-        name={name}
-        background={customAvatarBackground ?? undefined}
-        size={32}
-      >
+      <Avatar avatar={avatar} name={name} size={32}>
         <ShareReplyBadge status={answer} />
       </Avatar>
       <View style={{ flex: 1 }}>

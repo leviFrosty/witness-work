@@ -282,7 +282,8 @@ same 90-day retention window. Redaction or permanent erasure removes their local
 files, including abandoned draft revisions; photo replacements remove superseded
 files. Data-protection erasure received from another device also removes local bytes.
 
-On iCloud and Google Drive, photos travel only with “Include photos” on; on
+On iCloud and Google Drive, photos travel only with “Include photos” on (the
+default for new installs; existing installs keep their setting); on
 Cloud Sync they always do (see [Cloud Sync](#cloud-sync)). Turning off photo
 transfer pauses this device. “Remove iCloud photos” is a
 separate explicit cleanup of uploaded files; local copies remain. Other enabled

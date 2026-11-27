@@ -32,7 +32,7 @@ export default function BuddiesSharingSection({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { buddy } = useBuddySettingsScope()
-  const { avatar, customAvatarBackground } = useProfile()
+  const avatar = useProfile((state) => state.avatar)
   const name = useBuddiesCardName()
   const role = usePreferences((state) => state.role)
   const tenureStartDate = usePreferences((state) => state.tenureStartDate)
@@ -77,13 +77,7 @@ export default function BuddiesSharingSection({
       {profileRow && (
         <BuddyListRow
           last={last === 'profile'}
-          leading={
-            <Avatar
-              avatar={avatar}
-              name={name}
-              background={customAvatarBackground ?? undefined}
-            />
-          }
+          leading={<Avatar avatar={avatar} name={name} />}
           title={name.trim() || i18n.t('buddies_editProfile')}
           subtitle={name.trim() ? i18n.t('buddies_editProfile') : undefined}
           onPress={() => navigation.navigate('PreferencesPublisher')}

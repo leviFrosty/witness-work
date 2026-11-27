@@ -200,7 +200,7 @@ function YourAnswerRow({
   onAnswer: (reply: ShareReply) => void
 }) {
   const theme = useTheme()
-  const { avatar, customAvatarBackground } = useProfile()
+  const avatar = useProfile((state) => state.avatar)
   const name = useBuddiesCardName()
   const answer = status === 'pending' ? undefined : status
   const note = { color: theme.colors.textAlt, fontSize: theme.fontSize('sm') }
@@ -214,12 +214,7 @@ function YourAnswerRow({
         paddingRight: 9,
       }}
     >
-      <Avatar
-        avatar={avatar}
-        name={name}
-        background={customAvatarBackground ?? undefined}
-        size={32}
-      >
+      <Avatar avatar={avatar} name={name} size={32}>
         <ShareReplyBadge status={answer} />
       </Avatar>
       <View style={{ flex: 1 }}>

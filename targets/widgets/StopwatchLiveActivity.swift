@@ -41,6 +41,11 @@ struct StopwatchLiveActivity: Widget {
               .foregroundStyle(accent)
           }
           .appLanguage(language)
+          // Inset from the expanded island's inner corner mask (which clips
+          // the top-leading arc of the glyph) and align vertically with the
+          // trailing controls. Applied outside `.appLanguage` so `.leading`
+          // tracks the system corner even when the app's language flips RTL.
+          .padding([.top, .leading], WidgetSpacing.lg)
         }
         DynamicIslandExpandedRegion(.trailing) {
           StopwatchControlsView(state: context.state, compact: true)

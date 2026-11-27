@@ -31,6 +31,9 @@ vi.mock('@/features/pet/components/PetUnlockRevealHost', () => ({
 vi.mock('@/features/routine/components/PlanFinishedCelebrationHost', () => ({
   default: () => null,
 }))
+vi.mock('@/app/data-protection/AccountDataProtectionPrompt', () => ({
+  default: () => null,
+}))
 vi.mock('react-native', () => ({
   AppState: {
     get currentState() {

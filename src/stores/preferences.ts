@@ -10,6 +10,11 @@ import { canonicalJson } from '@/lib/canonicalJson'
 import type { ResetEpoch } from '@/lib/syncResetEpoch'
 import type { SyncDeviceFiles } from '@/lib/syncDevices'
 import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
+import {
+  answeredDataProtection,
+  chosenDataProtection,
+  type AccountDataProtection,
+} from '@/lib/dataProtectionAccount'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { DEFAULT_TAB_ORDER } from '@/lib/tabOrderPreferences'
 import type {
@@ -558,6 +563,10 @@ export const PREFERENCE_DEFAULTS = {
 
   dataProtectionModeSetByUser: false,
 
+  dataProtectionAccount: null as AccountDataProtection | null,
+
+  dataProtectionAccountAnswered: null as number | null,
+
   dataProtectionRetentionPromptedAt: undefined as string | undefined,
 
   territoryPrivacyMode: null as boolean | null,
@@ -795,7 +804,29 @@ export const migratePreferencesPersistedState = (
   if (version < 18) {
     next = migrateTerritoriesHomeSectionLast(next)
   }
+  if (version < 19) {
+    next = migrateSeedAccountDataProtection(next)
+  }
   return next
+}
+
+export const migrateSeedAccountDataProtection = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const current = state as Record<string, unknown>
+  if (current.dataProtectionMode !== true || current.dataProtectionAccount)
+    return state
+  const at = syncTimestamp()
+  const stamps =
+    current.preferenceUpdatedAt &&
+    typeof current.preferenceUpdatedAt === 'object'
+      ? (current.preferenceUpdatedAt as Record<string, unknown>)
+      : {}
+  return {
+    ...current,
+    dataProtectionAccount: { on: true, at },
+    dataProtectionAccountAnswered: at,
+    preferenceUpdatedAt: { ...stamps, dataProtectionAccount: at },
+  }
 }
 
 export const migrateDaysCardToShortList = (state: unknown): unknown => {
@@ -1336,6 +1367,12 @@ export const usePreferences = create(
         setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
           set({ defaultPhoneRegionCode }),
 
+        chooseDataProtectionMode: (on: boolean) =>
+          set(chosenDataProtection(on, Date.now())),
+        answerAccountDataProtection: (follow: boolean) => {
+          const answer = answeredDataProtection(getState(), follow)
+          if (answer) set(answer)
+        },
         markDataProtectionRetentionPrompted: (at: Date = new Date()) =>
           set({ dataProtectionRetentionPromptedAt: at.toISOString() }),
         removeHint: (hint: keyof typeof hints) =>
@@ -1567,7 +1604,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 18,
+      version: 19,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

@@ -5,6 +5,7 @@ export const TAKEOVER_PRIORITY: Record<TakeoverKind, number> = {
   'update-reveal': 10,
   'milestone-reveal': 11,
   'whats-new': 20,
+  'data-protection-follow': 30,
   'streak-celebration': 40,
   'badge-celebration': 41,
   'pet-unlock': 42,

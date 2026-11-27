@@ -11,6 +11,8 @@ interface ConfirmDestructiveOptions {
 
   onConfirm: () => void
 
+  onCancel?: () => void
+
   alternative?: { label: string; onPress: () => void }
 }
 
@@ -19,10 +21,11 @@ const confirmDestructive = ({
   description,
   confirmLabel,
   onConfirm,
+  onCancel,
   alternative,
 }: ConfirmDestructiveOptions) => {
   Alert.alert(title, description, [
-    { text: i18n.t('cancel'), style: 'cancel' },
+    { text: i18n.t('cancel'), style: 'cancel', onPress: onCancel },
     ...(alternative
       ? [{ text: alternative.label, onPress: alternative.onPress }]
       : []),

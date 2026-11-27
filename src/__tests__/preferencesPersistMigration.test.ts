@@ -32,6 +32,7 @@ import {
   migrateShowQuickActionsHomeSection,
   migrateShowThisWeekHomeSection,
   migrateTerritoriesHomeSectionLast,
+  migrateSeedAccountDataProtection,
   migrateUnchosenContactSortToSuggested,
 } from '@/stores/preferences'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -1088,5 +1089,40 @@ describe('preferences persist migrate v17 → v18 (Territories last on Home)', (
     expect(migrateTerritoriesHomeSectionLast(once)).toEqual(once)
     const moved = { homeScreenElementsOrder: ['territories', 'timer'] }
     expect(migratePreferencesPersistedState(moved, 18)).toEqual(moved)
+  })
+})
+
+describe('preferences persist migrate v18 → v19 (account-wide data protection)', () => {
+  it('publishes a device that has it on as the account choice', () => {
+    const migrated = migratePreferencesPersistedState(
+      { dataProtectionMode: true, preferenceUpdatedAt: { role: 5 } },
+      18
+    ) as {
+      dataProtectionAccount: { at: number }
+      dataProtectionAccountAnswered: number
+      preferenceUpdatedAt: Record<string, number>
+    }
+    const at = migrated.dataProtectionAccount.at
+    expect(migrated.dataProtectionAccount).toEqual({ on: true, at })
+    expect(migrated.dataProtectionAccountAnswered).toBe(at)
+    expect(migrated.preferenceUpdatedAt).toEqual({
+      role: 5,
+      dataProtectionAccount: at,
+    })
+  })
+
+  it('publishes nothing for a device that has it off', () => {
+    const off = { dataProtectionMode: false, dataProtectionModeSetByUser: true }
+    expect(migrateSeedAccountDataProtection(off)).toBe(off)
+  })
+
+  it('keeps an account choice that is already there and skips v19 blobs', () => {
+    const chosen = {
+      dataProtectionMode: true,
+      dataProtectionAccount: { on: false, at: 1 },
+    }
+    expect(migrateSeedAccountDataProtection(chosen)).toBe(chosen)
+    const on = { dataProtectionMode: true }
+    expect(migratePreferencesPersistedState(on, 19)).toBe(on)
   })
 })

@@ -21,6 +21,7 @@ import {
   refreshPublishing,
 } from '@/app/calendar/calendarSync'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { keepsAccountDetailsPrivate } from '@/lib/dataProtectionAccount'
 
 export function useCalendarSync(ready: boolean | undefined) {
   useEffect(() => {
@@ -58,7 +59,7 @@ export function useCalendarSync(ready: boolean | undefined) {
         useCalendarSettings.getState().enabled,
 
         usePreferences.getState().returnVisitNotificationOffset,
-        usePreferences.getState().dataProtectionMode,
+        keepsAccountDetailsPrivate(usePreferences.getState()),
       ])
     const run = () => {
       if (stopped || running || AppState.currentState !== 'active') return
@@ -162,7 +163,8 @@ export function useCalendarSync(ready: boolean | undefined) {
           if (
             state.returnVisitNotificationOffset !==
               previous.returnVisitNotificationOffset ||
-            state.dataProtectionMode !== previous.dataProtectionMode
+            keepsAccountDetailsPrivate(state) !==
+              keepsAccountDetailsPrivate(previous)
           )
             onDataChange()
         }),

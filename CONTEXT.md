@@ -294,6 +294,10 @@ _Avoid_: bundling Image Sync into iCloud Sync — they're independently togglabl
 A placeholder value (e.g. `icloud://contact-<id>` or `icloud://profile`) sitting in an avatar's `value` field on a record pulled from another device whose binary has not yet downloaded. Renders as the initials/emoji fallback. Replaced by a real `file://` URI once the binary lands; persists indefinitely if Image Sync is disabled on either side.
 _Avoid_: treating iCloud Markers as broken data — they are valid "image intended, binary unavailable here" placeholders.
 
+**Data Protection Mode**:
+The switch the app calls **EU / GDPR mode**. Chosen for the account: turning it on or off on one device asks each of the User's other syncing devices to follow the next time it's used, and a device may stay out (ADR 0068). The choice travels end to end encrypted with the other preferences; the server never learns it. Calendar Sync follows the account's choice.
+_Avoid_: calling it per device, or saying it syncs silently.
+
 ### Map
 
 **Marker**:

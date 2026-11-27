@@ -22,6 +22,7 @@ import { calendarRecovery } from '@/app/calendar/calendarRecovery'
 import { resumeWhenCalendarAllowed } from '@/app/calendar/resumeWhenCalendarAllowed'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { usePreferences } from '@/stores/preferences'
+import { keepsAccountDetailsPrivate } from '@/lib/dataProtectionAccount'
 import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
 import { addForegroundListener } from '@/lib/appLifecycle'
 
@@ -42,7 +43,7 @@ export default function CalendarSettings() {
   const theme = useTheme()
   const settings = useCalendarSync()
   const { state, deviceId, working, error } = useCalendarPublishing()
-  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  const detailsPrivate = usePreferences(keepsAccountDetailsPrivate)
   const [destinations, setDestinations] = useState<CalendarDestination[]>([])
   const [sources, setSources] = useState<CalendarSource[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -373,7 +374,7 @@ export default function CalendarSettings() {
         </View>
       )}
 
-      {!dataProtectionMode && (
+      {!detailsPrivate && (
         <View>
           <SectionTitle text={i18n.t('calendarOptions')} />
           <Section>
